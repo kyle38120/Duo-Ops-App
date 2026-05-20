@@ -889,7 +889,29 @@ function openShowDetail(id,source){
   const d=daysUntil(s.date);const isPast=s.date<today();
   const name=s.title||s.venue;
   const isCal=source==='cal';
-  document.getElementById('modal-show-detail-content').innerHTML=`<div class="modal-handle"></div><div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:16px"><div><h2 style="margin-bottom:4px">${name}</h2><p style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">${fmtDate(s.date)}${s.time?' · '+fmtTime(s.time):''}</p></div>${isPast?`<span class="badge badge-fog">Done</span>`:`<div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);text-align:right;padding-top:4px">${fmtCountdown(d)}</div>`}</div><div style="display:flex;gap:6px;margin-bottom:16px">${isCal?`<span class="badge badge-gold">From Calendar</span>`:`<span class="badge badge-fog">Manual</span>`}</div>${s.notes||s.location?`<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--fog);font-weight:400">${s.notes||s.location}</p></div>`:''}${isCal?`<p style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:16px">Managed in Google Calendar</p><button class="btn btn-ghost btn-full" onclick="closeModal('modal-show-detail')">Close</button>`:`<div style="display:flex;gap:10px"><button class="btn btn-ghost" style="flex:1" onclick="editShow('${s.id}')">Edit</button><button class="btn btn-danger" style="flex:1" onclick="deleteShow('${s.id}')">Delete</button></div><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal('modal-show-detail')">Close</button>`}`;
+  // Build maps URL — combine name + location/notes for best result
+  const location=s.location||s.notes||'';
+  const mapsQuery=encodeURIComponent([name,location].filter(Boolean).join(' '));
+  const mapsUrl=`maps://maps.apple.com/?q=${mapsQuery}`;
+  const mapsBtn=`<a href="${mapsUrl}" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:var(--charcoal);border:1px solid var(--border2);border-radius:2px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);text-decoration:none;margin-bottom:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Get Directions</a>`;
+  document.getElementById('modal-show-detail-content').innerHTML=`
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <h2 style="margin-bottom:4px">${name}</h2>
+        <p style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">${fmtDate(s.date)}${s.time?' · '+fmtTime(s.time):''}</p>
+      </div>
+      ${isPast?`<span class="badge badge-fog">Done</span>`:`<div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);text-align:right;padding-top:4px">${fmtCountdown(d)}</div>`}
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      ${isCal?`<span class="badge badge-gold">From Calendar</span>`:`<span class="badge badge-fog">Manual</span>`}
+    </div>
+    ${s.notes||s.location?`<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--fog);font-weight:400">${s.notes||s.location}</p></div>`:''}
+    ${mapsBtn}
+    ${isCal
+      ?`<p style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:12px">Managed in Google Calendar</p><button class="btn btn-ghost btn-full" onclick="closeModal('modal-show-detail')">Close</button>`
+      :`<div style="display:flex;gap:10px"><button class="btn btn-ghost" style="flex:1" onclick="editShow('${s.id}')">Edit</button><button class="btn btn-danger" style="flex:1" onclick="deleteShow('${s.id}')">Delete</button></div><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal('modal-show-detail')">Close</button>`
+    }`;
   openModal('modal-show-detail');
 }
 function saveShow(){
