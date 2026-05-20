@@ -790,7 +790,7 @@ function renderDash(){
   // SHOWS THIS YEAR + THIS MONTH
   const allS=allShows();
   const showsYear=allS.filter(s=>s.date&&s.date.startsWith(thisYear)&&s.date<=today()).length;
-  const showsMonth=allS.filter(s=>s.date&&fmtMonth(s.date)===thisMonth()&&s.date<=today()).length;
+  const showsMonth=allS.filter(s=>s.date&&fmtMonth(s.date)===thisMonth()).length;
   const showsEl=document.getElementById('dash-shows-year');
   const showsLabel=document.getElementById('dash-shows-label');
   if(showsEl)showsEl.textContent=showsYear;
