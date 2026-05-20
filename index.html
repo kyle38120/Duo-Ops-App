@@ -779,10 +779,10 @@ function renderDash(){
   const bestAmt=bestEntry?bestEntry[1]:0;
   const bestMonthLabel=bestEntry?new Date(bestEntry[0]+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
   if(bestEntry)bestMonthKey=bestEntry[0];
-  // Duo total this month — full venue check (both shares), tips shown separately
+  // Duo total this month — venue check + full tip jar (so Jaden + Kyle = Total)
   const duoMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
-    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;
-    return a+(gig||chk*2);
+    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
+    return a+(gig||chk*2)+tips;
   },0);
   document.getElementById('dash-month-total').textContent='$'+mTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('dash-year-total').textContent='$'+yTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -1235,18 +1235,15 @@ function updateDuoExpand(){
   let inc=[...state.income].filter(i=>i.source==='Duo Show'||i.source==='Private Event');
   if(duoPeriod==='month')inc=inc.filter(i=>fmtMonth(i.date)===thisMonth());
   else if(duoPeriod==='year')inc=inc.filter(i=>i.date&&i.date.startsWith(thisYear));
-  // Jaden = her check + half tips
+  // Jaden = her check + half tip jar
   const jaden=inc.reduce((a,b)=>{
     const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
     return a+chk+(tips/2);
   },0);
   // Kyle = same as Jaden (50/50 split)
   const kyle=jaden;
-  // Duo total = full venue check (gig total or check*2)
-  const total=inc.reduce((a,b)=>{
-    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;
-    return a+(gig||chk*2);
-  },0);
+  // Total = venue check + full tip jar (so Jaden + Kyle = Total)
+  const total=jaden+kyle;
   const jEl=document.getElementById('duo-jaden-val');const kEl=document.getElementById('duo-kyle-val');const tEl=document.getElementById('duo-total-val');
   if(jEl)jEl.textContent=fmtAmt(jaden);if(kEl)kEl.textContent=fmtAmt(kyle);if(tEl)tEl.textContent=fmtAmt(total);
   const duoEl=document.getElementById('inc-duo-month');if(duoEl)duoEl.textContent=fmtAmt(total);
@@ -1387,10 +1384,10 @@ function renderIncome(){
   const bestEntry=Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
   const bestAmt=bestEntry?bestEntry[1]:0;
   const bestMonthLabel=bestEntry?new Date(bestEntry[0]+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
-  // Duo total this month — full venue check (both shares)
+  // Duo total this month — venue check + full tip jar
   const duoMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
-    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;
-    return a+(gig||chk*2);
+    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
+    return a+(gig||chk*2)+tips;
   },0);
   // TikTok vs shows split this year
   const ttTotal=yInc.filter(i=>i.source==='TikTok Live'||i.source==='TikTok Gifts').reduce((a,b)=>a+earnedAmt(b),0);
