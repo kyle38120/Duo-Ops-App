@@ -213,7 +213,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
   <!-- FEEL GOOD METRICS -->
   <div class="section" style="padding-top:16px">
     <div style="margin-bottom:10px">
-      <div class="metric" style="background:var(--charcoal);border:1px solid var(--border);border-radius:4px;padding:16px;cursor:pointer" onclick="jumpToIncome('month')">
+      <div class="metric" style="background:var(--charcoal);border:1px solid var(--border);border-radius:4px;padding:16px;cursor:pointer" onclick="jumpToIncome('none')">
         <div style="display:flex;align-items:baseline;gap:8px">
           <div class="metric-val" id="dash-month-total" style="color:var(--gold);font-size:42px">$0</div>
         </div>
@@ -301,7 +301,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 <div id="page-income" class="page">
   <div class="page-header"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Income</h1><p>Business intelligence</p></div></div></div>
   <div class="tabs" id="income-tabs">
-    <button class="tab active" onclick="filterIncome('month',this)">This Month</button>
+    <button class="tab active" onclick="filterIncome('month',this)">Month</button>
     <button class="tab" onclick="filterIncome('stream',this)">By Stream</button>
     <button class="tab" onclick="filterIncome('venue',this)">By Venue</button>
     <button class="tab" onclick="filterIncome('year',this)">By Year</button>
@@ -310,30 +310,53 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
   <div class="section" style="padding-top:14px">
     <!-- STATS ROW -->
     <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('month')">
-        <div class="metric-val" id="inc-total" style="color:var(--gold);font-size:22px">$0</div>
+      <!-- THIS MONTH — expandable -->
+      <div class="metric" style="cursor:pointer" onclick="toggleMonthExpand()" id="month-metric-card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="metric-val" id="inc-total" style="color:var(--gold);font-size:22px">$0</div>
+          <span id="month-expand-arrow" style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">expand</span>
+        </div>
         <div class="metric-label">This month</div>
+        <div id="month-expand-content" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">This month</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold)" id="month-this-val">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Last month</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--bone)" id="month-last-val">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px;border-top:1px solid var(--border)">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">This year</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--white)" id="month-year-val">$0</span>
+          </div>
+        </div>
       </div>
       <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
         <div class="metric-val" id="inc-alltime" style="color:var(--bone);font-size:22px">$0</div>
-        <div class="metric-label">All time</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+          <div class="metric-label">All time</div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);opacity:.5">View</div>
+        </div>
       </div>
       <div class="metric" style="cursor:pointer" onclick="jumpToBestMonth()">
         <div class="metric-val" id="inc-best" style="color:var(--bone);font-size:22px">$0</div>
         <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="inc-best-label"></div>
-        <div class="metric-label" style="margin-top:2px">Best month</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+          <div class="metric-label">Best month</div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);opacity:.5">View</div>
+        </div>
       </div>
       <!-- DUO TOTAL — expandable -->
       <div class="metric" style="cursor:pointer" onclick="toggleDuoExpand()" id="duo-metric-card">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="metric-val" id="inc-duo-month" style="color:var(--bone);font-size:22px">$0</div>
-          <span id="duo-expand-arrow" style="font-size:12px;color:var(--fog)">▼</span>
+          <span id="duo-expand-arrow" style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">expand</span>
         </div>
-        <div class="metric-label">Duo total ↕</div>
-        <!-- EXPANDED CONTENT -->
+        <div class="metric-label">Duo total</div>
         <div id="duo-expand-content" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
           <div style="display:flex;gap:6px;margin-bottom:10px">
-            <button class="tab ${duoPeriod==='month'?'active':''}" id="duo-tab-month" onclick="event.stopPropagation();setDuoPeriod('month')" style="font-size:10px;padding:5px 10px">Month</button>
+            <button class="tab" id="duo-tab-month" onclick="event.stopPropagation();setDuoPeriod('month')" style="font-size:10px;padding:5px 10px">Month</button>
             <button class="tab" id="duo-tab-year" onclick="event.stopPropagation();setDuoPeriod('year')" style="font-size:10px;padding:5px 10px">Year</button>
             <button class="tab" id="duo-tab-all" onclick="event.stopPropagation();setDuoPeriod('all')" style="font-size:10px;padding:5px 10px">All Time</button>
           </div>
@@ -1126,14 +1149,35 @@ function clearTaskForm(){['task-edit-id','t-name','t-due','t-notes'].forEach(id=
 // INCOME NAV SHORTCUTS
 function jumpToIncome(filter){
   const navBtns=document.querySelectorAll('#nav .nav-btn');
-  // Income is 4th nav button
   if(navBtns[3])goTo('income',navBtns[3]);
+  if(filter==='none')return;
   currentIncFilter=filter;
   document.querySelectorAll('#income-tabs .tab').forEach(t=>t.classList.remove('active'));
   const tabMap={'month':0,'stream':1,'venue':2,'year':3,'all':4};
   const tabs=document.querySelectorAll('#income-tabs .tab');
   if(tabs[tabMap[filter]])tabs[tabMap[filter]].classList.add('active');
   renderIncome();
+}
+
+// MONTH EXPAND
+let monthExpanded=false;
+function toggleMonthExpand(){
+  monthExpanded=!monthExpanded;
+  const content=document.getElementById('month-expand-content');
+  const arrow=document.getElementById('month-expand-arrow');
+  if(content)content.style.display=monthExpanded?'block':'none';
+  if(arrow)arrow.textContent=monthExpanded?'collapse':'expand';
+  if(monthExpanded)updateMonthExpand();
+}
+function updateMonthExpand(){
+  const thisYear=today().substring(0,4);
+  const prevMonth=new Date(new Date().getFullYear(),new Date().getMonth()-1,1).toISOString().substring(0,7);
+  const earnedAmt=i=>{const chk=parseFloat(i.amount)||0;const tips=parseFloat(i.tips)||0;const isDuo=i.source==='Duo Show'||i.source==='Private Event';return chk+(isDuo?tips/2:tips);};
+  const mThis=state.income.filter(i=>fmtMonth(i.date)===thisMonth()).reduce((a,b)=>a+earnedAmt(b),0);
+  const mLast=state.income.filter(i=>fmtMonth(i.date)===prevMonth).reduce((a,b)=>a+earnedAmt(b),0);
+  const mYear=state.income.filter(i=>i.date&&i.date.startsWith(thisYear)).reduce((a,b)=>a+earnedAmt(b),0);
+  const tEl=document.getElementById('month-this-val');const lEl=document.getElementById('month-last-val');const yEl=document.getElementById('month-year-val');
+  if(tEl)tEl.textContent=fmtAmt(mThis);if(lEl)lEl.textContent=fmtAmt(mLast);if(yEl)yEl.textContent=fmtAmt(mYear);
 }
 
 let bestMonthKey='';
