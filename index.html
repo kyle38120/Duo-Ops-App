@@ -305,7 +305,6 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
     <button class="tab" onclick="filterIncome('stream',this)">By Stream</button>
     <button class="tab" onclick="filterIncome('venue',this)">By Venue</button>
     <button class="tab" onclick="filterIncome('year',this)">By Year</button>
-    <button class="tab" onclick="filterIncome('all',this)">All Time</button>
   </div>
   <div class="section" style="padding-top:14px">
     <!-- STATS ROW -->
@@ -332,12 +331,9 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
           </div>
         </div>
       </div>
-      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
+      <div class="metric">
         <div class="metric-val" id="inc-alltime" style="color:var(--bone);font-size:22px">$0</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
-          <div class="metric-label">All time</div>
-          <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);opacity:.5">View</div>
-        </div>
+        <div class="metric-label">All time</div>
       </div>
       <div class="metric" style="cursor:pointer" onclick="jumpToBestMonth()">
         <div class="metric-val" id="inc-best" style="color:var(--bone);font-size:22px">$0</div>
@@ -1185,15 +1181,14 @@ let bestMonthKey='';
 function jumpToBestMonth(){
   const navBtns=document.querySelectorAll('#nav .nav-btn');
   if(navBtns[3])goTo('income',navBtns[3]);
-  currentIncFilter='all';
+  currentIncFilter='month';
   document.querySelectorAll('#income-tabs .tab').forEach(t=>t.classList.remove('active'));
   const tabs=document.querySelectorAll('#income-tabs .tab');
-  if(tabs[4])tabs[4].classList.add('active');
+  if(tabs[0])tabs[0].classList.add('active');
   renderIncome();
-  // After render, open the best month group
   if(bestMonthKey){
     setTimeout(()=>{
-      const mid='month-'+bestMonthKey.replace('-','_');
+      const mid='mth-'+bestMonthKey.replace('-','_');
       const el=document.getElementById(mid);
       const arrow=document.getElementById(mid+'-arrow');
       if(el&&el.style.display==='none'){el.style.display='block';if(arrow)arrow.textContent='▲';}
@@ -1395,7 +1390,26 @@ function renderIncome(){
   if(!allInc.length){list.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><p>No income logged yet — tap +</p></div>`;return;}
 
   if(currentIncFilter==='month'){
-    list.innerHTML=mInc.length?`<div class="card" style="padding:8px 16px">${mInc.map(i=>incRow(i)).join('')}</div>`:`<div class="card"><p style="color:var(--fog);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">No income this month</p></div>`;
+    // All months grouped, current month open by default
+    const months={};allInc.forEach(i=>{const m=fmtMonth(i.date);if(!months[m])months[m]=[];months[m].push(i);});
+    list.innerHTML=Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,items],idx)=>{
+      const tot=items.reduce((a,b)=>a+earnedAmt(b),0);
+      const label=new Date(m+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
+      const mid='mth-'+m.replace('-','_');
+      const isOpen=m===thisMonth();
+      return`<div class="stream-group">
+        <div class="stream-group-header" style="cursor:pointer" onclick="toggleGroup('${mid}')">
+          <span class="stream-group-name">${label}</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="stream-group-total">${fmtAmt(tot)}</span>
+            <span id="${mid}-arrow" style="font-size:12px;color:var(--fog)">${isOpen?'▲':'▼'}</span>
+          </div>
+        </div>
+        <div id="${mid}" style="display:${isOpen?'block':'none'}">
+          <div class="card" style="padding:8px 16px">${items.map(i=>incRow(i)).join('')}</div>
+        </div>
+      </div>`;
+    }).join('');
 
   } else if(currentIncFilter==='stream'){
     // Collapsed by default — tap to expand
