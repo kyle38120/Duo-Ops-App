@@ -218,7 +218,10 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
           <div class="metric-val" id="dash-month-total" style="color:var(--gold);font-size:42px">$0</div>
         </div>
         <div style="font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="dash-month-label">May 2026</div>
-        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);margin-top:4px">Jaden's earnings ↗</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog)">Jaden's earnings</div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);opacity:.5">View</div>
+        </div>
       </div>
     </div>
     <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px">
@@ -234,10 +237,13 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
         <div class="metric-val" id="dash-shows-year" style="color:var(--gold)">0</div>
         <div class="metric-label" id="dash-shows-label">Shows this year</div>
       </div>
-      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
+      <div class="metric" style="cursor:pointer" onclick="jumpToBestMonth()">
         <div class="metric-val" id="dash-best-month" style="color:var(--bone);font-size:22px">$0</div>
         <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="dash-best-month-label"></div>
-        <div class="metric-label" style="margin-top:2px">Best month ↗</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+          <div class="metric-label">Best month ever</div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);opacity:.5">View</div>
+        </div>
       </div>
     </div>
   </div>
@@ -306,16 +312,16 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
     <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div class="metric" style="cursor:pointer" onclick="jumpToIncome('month')">
         <div class="metric-val" id="inc-total" style="color:var(--gold);font-size:22px">$0</div>
-        <div class="metric-label">This month ↗</div>
+        <div class="metric-label">This month</div>
       </div>
       <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
         <div class="metric-val" id="inc-alltime" style="color:var(--bone);font-size:22px">$0</div>
-        <div class="metric-label">All time ↗</div>
+        <div class="metric-label">All time</div>
       </div>
-      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
+      <div class="metric" style="cursor:pointer" onclick="jumpToBestMonth()">
         <div class="metric-val" id="inc-best" style="color:var(--bone);font-size:22px">$0</div>
         <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="inc-best-label"></div>
-        <div class="metric-label" style="margin-top:2px">Best month ↗</div>
+        <div class="metric-label" style="margin-top:2px">Best month</div>
       </div>
       <!-- DUO TOTAL — expandable -->
       <div class="metric" style="cursor:pointer" onclick="toggleDuoExpand()" id="duo-metric-card">
@@ -746,6 +752,7 @@ function renderDash(){
   const bestEntry=Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
   const bestAmt=bestEntry?bestEntry[1]:0;
   const bestMonthLabel=bestEntry?new Date(bestEntry[0]+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
+  if(bestEntry)bestMonthKey=bestEntry[0];
   // Duo total this month
   const duoMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
     const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
@@ -964,8 +971,13 @@ function renderShows(){
     if(isPast){
       const matched=state.income.filter(i=>i.date===s.date&&(i.source==='Duo Show'||i.source==='Solo Show'||i.source==='Private Event'));
       if(matched.length){
-        const check=matched.reduce((a,b)=>a+(parseFloat(b.amount)||0),0);
         const tips=matched.reduce((a,b)=>a+(parseFloat(b.tips)||0),0);
+        const check=matched.reduce((a,b)=>{
+          const isDuo=b.source==='Duo Show'||b.source==='Private Event';
+          const amt=parseFloat(b.amount)||0;
+          // Use gig total if available, otherwise double for duo, as-is for solo
+          return a+(parseFloat(b.total)||( isDuo?amt*2:amt));
+        },0);
         payoutHTML=`<div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
           <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fog)">Check ${fmtAmt(check)}</span>
           ${tips?`<span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--bone)">Tips ${fmtAmt(tips)}</span>`:''}
@@ -1124,7 +1136,27 @@ function jumpToIncome(filter){
   renderIncome();
 }
 
-// DUO EXPAND
+let bestMonthKey='';
+
+function jumpToBestMonth(){
+  const navBtns=document.querySelectorAll('#nav .nav-btn');
+  if(navBtns[3])goTo('income',navBtns[3]);
+  currentIncFilter='all';
+  document.querySelectorAll('#income-tabs .tab').forEach(t=>t.classList.remove('active'));
+  const tabs=document.querySelectorAll('#income-tabs .tab');
+  if(tabs[4])tabs[4].classList.add('active');
+  renderIncome();
+  // After render, open the best month group
+  if(bestMonthKey){
+    setTimeout(()=>{
+      const mid='month-'+bestMonthKey.replace('-','_');
+      const el=document.getElementById(mid);
+      const arrow=document.getElementById(mid+'-arrow');
+      if(el&&el.style.display==='none'){el.style.display='block';if(arrow)arrow.textContent='▲';}
+      if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    },100);
+  }
+}
 let duoExpanded=false;
 let duoPeriod='month';
 
