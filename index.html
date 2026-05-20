@@ -165,28 +165,34 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
     </div>
   </div>
 
+  <!-- FEEL GOOD METRICS -->
   <div class="section" style="padding-top:16px">
-    <div class="section-label">Next Show</div>
-    <div id="dash-next-show"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">This Week</div>
-    <div id="dash-tasks-preview"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Income — This Month</div>
-    <div class="metrics">
-      <div class="metric">
-        <div class="metric-val" id="dash-month-total" style="color:var(--gold)">$0</div>
-        <div class="metric-label">Total</div>
+    <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px">
+      <div class="metric" style="grid-column:1/-1">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div class="metric-val" id="dash-month-total" style="color:var(--gold);font-size:38px">$0</div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">this month</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">
+          <div id="dash-year-total" style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--bone)">$0</div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">this year</div>
+        </div>
+        <div class="metric-label" style="margin-top:6px">Income</div>
       </div>
       <div class="metric">
-        <div class="metric-val" id="dash-top-stream" style="color:var(--rust);font-size:18px;line-height:1.2">—</div>
-        <div class="metric-label">Top Stream</div>
+        <div class="metric-val" id="dash-shows-year" style="color:var(--rust)">0</div>
+        <div class="metric-label">Shows this year</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val" id="dash-top-stream" style="color:var(--bone);font-size:18px;line-height:1.2">—</div>
+        <div class="metric-label">Top stream</div>
       </div>
     </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Next Show</div>
+    <div id="dash-next-show"></div>
   </div>
 
   <div class="section">
@@ -196,10 +202,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 
   <div class="section">
     <div class="section-label">Release Pipeline</div>
-    <div class="card">
-      <div id="release-content"><p style="color:var(--fog);font-size:13px">No release set up yet</p></div>
-      <button class="btn btn-ghost" style="margin-top:12px;font-size:11px" onclick="openModal('modal-release')">Edit Pipeline</button>
-    </div>
+    <div id="release-pipeline"></div>
   </div>
 
   <div class="section" style="padding-bottom:20px">
@@ -356,7 +359,8 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
   <h2 id="income-modal-title">Log Income</h2>
   <input type="hidden" id="inc-edit-id">
   <div class="form-group"><label>Description</label><input id="i-name" placeholder="TikTok Live — Thursday night"></div>
-  <div class="form-group"><label>Amount ($)</label><input id="i-amount" type="number" placeholder="0" min="0" step="0.01"></div>
+  <div class="form-group"><label>Your Amount ($)</label><input id="i-amount" type="number" placeholder="0" min="0" step="0.01"></div>
+  <div class="form-group"><label>Total Gig Amount ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">optional — for split shows</span></label><input id="i-total" type="number" placeholder="0" min="0" step="0.01"></div>
   <div class="form-group"><label>Source</label>
     <select id="i-source"><option>Duo Show</option><option>Solo Show</option><option>TikTok Live</option><option>TikTok Gifts</option><option>IG Live</option><option>Tips / Cash</option><option>Private Event</option><option>Merch</option><option>Other</option></select>
   </div>
@@ -379,28 +383,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 <div class="modal" id="modal-task-detail-content"></div>
 </div>
 
-<!-- MODAL: RELEASE PIPELINE -->
-<div class="modal-overlay" id="modal-release" onclick="closeOnOverlay(event,'modal-release')">
-<div class="modal">
-  <div class="modal-handle"></div>
-  <h2>Release Pipeline</h2>
-  <div class="form-group"><label>Next Single</label><input id="r-single" placeholder="Song title or TBD"></div>
-  <div class="form-group"><label>Cover Art Status</label>
-    <select id="r-art"><option>Not started</option><option>In progress</option><option>Done</option></select>
-  </div>
-  <div class="form-group"><label>Music Video Progress</label>
-    <select id="r-video"><option>Not started</option><option>Filming</option><option>Editing</option><option>Done</option></select>
-  </div>
-  <div class="form-group"><label>Distribution (DistroKid)</label>
-    <select id="r-distro"><option>Not started</option><option>Submitted</option><option>Live</option></select>
-  </div>
-  <div class="form-group"><label>Release Notes</label><textarea id="r-notes" placeholder="Timeline, campaign ideas..."></textarea></div>
-  <div style="display:flex;gap:10px;margin-top:8px">
-    <button class="btn btn-primary btn-full" onclick="saveRelease()">Save</button>
-    <button class="btn btn-ghost" onclick="closeModal('modal-release')" style="padding:10px 16px">Cancel</button>
-  </div>
-</div>
-</div>
+
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -485,6 +468,7 @@ function initFirebase(){
           if(!state.dumps)state.dumps=[];
           try{localStorage.setItem('duoops2',JSON.stringify(state));}catch(e){}
         }
+        seedTasksIfEmpty();
         if(!syncReady){syncReady=true;showSyncStatus('Synced','var(--accent-green)');}
         renderPage(currentPage);
       },(err)=>{
@@ -512,7 +496,6 @@ function renderPage(p){if(p==='dash')renderDash();else if(p==='shows')renderShow
 function handleFab(){if(currentPage==='tasks')openModal('modal-task');else if(currentPage==='income')openModal('modal-income');else if(currentPage==='check')return;else openModal('modal-task');}
 
 function openModal(id){
-  if(id==='modal-release'&&state.release){const r=state.release;if(r.single)document.getElementById('r-single').value=r.single;if(r.art)document.getElementById('r-art').value=r.art;if(r.video)document.getElementById('r-video').value=r.video;if(r.distro)document.getElementById('r-distro').value=r.distro;if(r.notes)document.getElementById('r-notes').value=r.notes;}
   document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
@@ -537,20 +520,22 @@ function renderDash(){
   } else {
     ns.innerHTML=`<div class="card"><p style="color:var(--fog);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase">${calLoaded&&!calError?'No upcoming shows on calendar':'Loading calendar...'}</p></div>`;
   }
-  const wEnd=new Date();wEnd.setDate(wEnd.getDate()+7);const wStr=wEnd.toISOString().split('T')[0];
-  const weekTasks=state.tasks.filter(t=>t.status!=='Done'&&(!t.due||t.due<=wStr)).slice(0,4);
-  const dt=document.getElementById('dash-tasks-preview');
-  if(weekTasks.length){
-    dt.innerHTML=weekTasks.map(t=>`<div class="card" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:8px" onclick="openTaskDetail('${t.id}')"><div class="dot ${t.priority==='High'?'dot-rust':t.priority==='Medium'?'dot-gold':'dot-fog'}"></div><div style="flex:1;font-size:14px;font-weight:400;letter-spacing:.04em">${t.name}</div><span class="badge badge-fog" style="font-size:9px">${t.type}</span></div>`).join('');
-  } else {
-    dt.innerHTML=`<div class="card"><p style="color:var(--fog);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">No tasks due this week</p></div>`;
-  }
+  // INCOME METRICS
+  const thisYear=today().substring(0,4);
   const mInc=state.income.filter(i=>fmtMonth(i.date)===thisMonth());
-  const total=mInc.reduce((a,b)=>a+(parseFloat(b.amount)||0),0);
-  document.getElementById('dash-month-total').textContent='$'+total.toFixed(0);
-  const streams={};mInc.forEach(i=>{streams[i.source]=(streams[i.source]||0)+(parseFloat(i.amount)||0)});
+  const yInc=state.income.filter(i=>i.date&&i.date.startsWith(thisYear));
+  const mTotal=mInc.reduce((a,b)=>a+(parseFloat(b.amount)||0),0);
+  const yTotal=yInc.reduce((a,b)=>a+(parseFloat(b.amount)||0),0);
+  document.getElementById('dash-month-total').textContent='$'+mTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  document.getElementById('dash-year-total').textContent='$'+yTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  // TOP STREAM — all time
+  const streams={};state.income.forEach(i=>{streams[i.source]=(streams[i.source]||0)+(parseFloat(i.amount)||0)});
   const top=Object.entries(streams).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('dash-top-stream').textContent=top?top[0].split(' ')[0].toUpperCase():'—';
+  document.getElementById('dash-top-stream').textContent=top?top[0].split(' ')[0]:'—';
+  // SHOWS THIS YEAR
+  const showsThisYear=allShows().filter(s=>s.date&&s.date.startsWith(thisYear)&&s.date<today()).length;
+  const showsEl=document.getElementById('dash-shows-year');
+  if(showsEl)showsEl.textContent=showsThisYear;
   renderFocus();renderReleaseDash();renderDumpList();
 }
 
@@ -583,12 +568,49 @@ function renderFocus(){
   (open.length>display.length?`<button class="btn btn-ghost btn-full" style="font-size:11px;margin-top:4px" onclick="document.querySelector('.nav-btn:nth-child(3)').click()">View all ${open.length} tasks</button>`:'');
 }
 
-function renderReleaseDash(){
-  const r=state.release;
-  if(!r||!r.single){document.getElementById('release-content').innerHTML=`<p style="color:var(--fog);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">No release set up yet</p>`;return;}
-  const sc=v=>v==='Done'?'badge-gold':v==='Not started'?'badge-rust':'badge-bone';
-  document.getElementById('release-content').innerHTML=`<div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.08em;color:var(--white);margin-bottom:10px">${r.single}</div><div style="display:flex;flex-wrap:wrap;gap:6px"><span class="badge ${sc(r.art)}">Art: ${r.art}</span><span class="badge ${sc(r.video)}">Video: ${r.video}</span><span class="badge ${sc(r.distro)}">Distro: ${r.distro}</span></div>${r.notes?`<p style="font-size:13px;color:var(--fog);margin-top:8px;font-weight:400">${r.notes}</p>`:''}`;
+// RELEASE PIPELINE — auto-derives from task states
+const PIPELINE=[
+  {song:'Water From the Earth',tracks:[
+    {label:'Cover Art',keys:['Create cover art for Water From the Earth']},
+    {label:'DistroKid',keys:['Upload Water From the Earth to DistroKid']},
+    {label:'Music Video',keys:['Film Water From the Earth music video','Edit Water From the Earth music video']},
+    {label:'Clips',keys:['Create Water From the Earth teaser clips']},
+  ]},
+  {song:'In Disguise',tracks:[
+    {label:'Music Video',keys:['Film In Disguise music video']},
+    {label:'Clips',keys:['Pull short clips from In Disguise footage','Create vertical edits from In Disguise']},
+  ]},
+];
+
+function getPipelineStatus(keys){
+  const matched=state.tasks.filter(t=>keys.includes(t.name));
+  if(!matched.length)return'not-started';
+  if(matched.every(t=>t.status==='Done'))return'done';
+  if(matched.some(t=>t.status==='In Progress'||t.status==='Done'))return'in-progress';
+  return'not-started';
 }
+
+function renderReleasePipeline(){
+  const el=document.getElementById('release-pipeline');if(!el)return;
+  el.innerHTML=PIPELINE.map(song=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;color:var(--white);margin-bottom:12px">${song.song}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${song.tracks.map(track=>{
+          const status=getPipelineStatus(track.keys);
+          const color=status==='done'?'var(--accent-green)':status==='in-progress'?'var(--gold)':'var(--fog)';
+          const label=status==='done'?'Done':status==='in-progress'?'In Progress':'Not Started';
+          const icon=status==='done'?'✓':status==='in-progress'?'◐':'○';
+          return`<div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:13px;font-weight:400;color:var(--bone)">${track.label}</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:${color};display:flex;align-items:center;gap:5px"><span>${icon}</span>${label}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderReleaseDash(){renderReleasePipeline();}
 // BRAIN DUMP
 function addDump(){
   const input=document.getElementById('dump-input');
@@ -740,19 +762,70 @@ function renderTasks(){
   let tasks=[...state.tasks];
   if(currentTaskFilter!=='all')tasks=tasks.filter(t=>t.type===currentTaskFilter);
   tasks.sort((a,b)=>({High:0,Medium:1,Low:2}[a.priority]||1)-({High:0,Medium:1,Low:2}[b.priority]||1));
-  const open=tasks.filter(t=>t.status!=='Done'),done=tasks.filter(t=>t.status==='Done');
+  const open=tasks.filter(t=>t.status==='Open');
+  const inprog=tasks.filter(t=>t.status==='In Progress');
+  const done=tasks.filter(t=>t.status==='Done');
   if(!tasks.length){list.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><p>No tasks yet — tap + to add</p></div>`;return;}
-  list.innerHTML=(open.length?`<div class="section-label" style="padding:0 0 8px">Open (${open.length})</div>`+open.map(t=>taskCard(t)).join(''):'')+(done.length?`<div class="section-label" style="padding:14px 0 8px">Done (${done.length})</div>`+done.map(t=>taskCard(t)).join(''):'');
+  list.innerHTML=
+    (inprog.length?`<div class="section-label" style="padding:0 0 8px">In Progress (${inprog.length})</div>`+inprog.map(t=>taskCard(t)).join(''):'') +
+    (open.length?`<div class="section-label" style="padding:${inprog.length?'14px':'0'} 0 8px">Open (${open.length})</div>`+open.map(t=>taskCard(t)).join(''):'') +
+    (done.length?`<div class="section-label" style="padding:14px 0 8px">Done (${done.length})</div>`+done.map(t=>taskCard(t)).join(''):'');
 }
+
 function taskCard(t){
   const isDone=t.status==='Done';
-  return`<div class="card" style="display:flex;gap:10px;align-items:start;cursor:pointer;opacity:${isDone?.5:1};margin-bottom:8px" onclick="openTaskDetail('${t.id}')"><div style="padding-top:4px"><div class="dot ${isDone?'dot-fog':t.priority==='High'?'dot-rust':t.priority==='Medium'?'dot-gold':'dot-fog'}"></div></div><div style="flex:1"><div style="font-size:14px;font-weight:400;letter-spacing:.04em;${isDone?'text-decoration:line-through;color:var(--fog)':'color:var(--bone)'}">${t.name}</div><div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><span class="badge badge-fog" style="font-size:9px">${t.type}</span>${t.due?`<span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);padding-top:1px">${fmtDate(t.due)}</span>`:''}</div></div><button onclick="event.stopPropagation();toggleTaskDone('${t.id}')" style="background:${isDone?'rgba(235,32,61,.12)':'var(--charcoal)'};border:1px solid ${isDone?'rgba(235,32,61,.3)':'var(--border)'};border-radius:2px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="${isDone?'var(--rust)':'var(--fog)'}" style="width:14px;height:14px;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg></button></div>`;
+  const isInProg=t.status==='In Progress';
+  const btnBg=isDone?'rgba(235,32,61,.12)':isInProg?'rgba(228,140,34,.15)':'var(--charcoal)';
+  const btnBorder=isDone?'rgba(235,32,61,.3)':isInProg?'rgba(228,140,34,.3)':'var(--border)';
+  const btnStroke=isDone?'var(--rust)':isInProg?'var(--gold)':'var(--fog)';
+  const dotClass=isDone?'dot-fog':isInProg?'dot-gold':t.priority==='High'?'dot-rust':t.priority==='Medium'?'dot-gold':'dot-fog';
+  const statusBadge=isInProg?`<span class="badge badge-gold" style="font-size:9px">In Progress</span>`:'';
+  return`<div class="card" style="display:flex;gap:10px;align-items:start;cursor:pointer;opacity:${isDone?.5:1};margin-bottom:8px" onclick="openTaskDetail('${t.id}')">
+    <div style="padding-top:4px"><div class="dot ${dotClass}"></div></div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:400;letter-spacing:.04em;${isDone?'text-decoration:line-through;color:var(--fog)':'color:var(--bone)'}">${t.name}</div>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <span class="badge badge-fog" style="font-size:9px">${t.type}</span>
+        ${statusBadge}
+        ${t.due?`<span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);padding-top:1px">${fmtDate(t.due)}</span>`:''}
+      </div>
+    </div>
+    <button onclick="event.stopPropagation();cycleTaskStatus('${t.id}')" style="background:${btnBg};border:1px solid ${btnBorder};border-radius:2px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="${btnStroke}" style="width:14px;height:14px;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </button>
+  </div>`;
 }
+
+function cycleTaskStatus(id){
+  const t=state.tasks.find(x=>x.id===id);if(!t)return;
+  if(t.status==='Open')t.status='In Progress';
+  else if(t.status==='In Progress')t.status='Done';
+  else t.status='Open';
+  save();renderTasks();renderDash();
+}
+
 function filterTasks(f,btn){currentTaskFilter=f;document.querySelectorAll('#tasks-tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderTasks();}
-function toggleTaskDone(id){const t=state.tasks.find(x=>x.id===id);if(t)t.status=t.status==='Done'?'Open':'Done';save();renderTasks();renderDash();}
+function toggleTaskDone(id){const t=state.tasks.find(x=>x.id===id);if(t){t.status=t.status==='Done'?'Open':'Done';save();renderTasks();renderDash();}}
 function openTaskDetail(id){
   const t=state.tasks.find(x=>x.id===id);if(!t)return;
-  document.getElementById('modal-task-detail-content').innerHTML=`<div class="modal-handle"></div><h2 style="margin-bottom:8px">${t.name}</h2><div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap"><span class="badge badge-fog">${t.type}</span><span class="badge ${t.priority==='High'?'badge-rust':t.priority==='Medium'?'badge-gold':'badge-fog'}">${t.priority}</span>${t.due?`<span class="badge badge-bone">${fmtDate(t.due)}</span>`:''}</div>${t.notes?`<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--fog);font-weight:400">${t.notes}</p></div>`:''}<div style="display:flex;gap:10px"><button class="btn btn-ghost" style="flex:1" onclick="editTask('${t.id}')">Edit</button><button class="btn btn-danger" style="flex:1" onclick="deleteTask('${t.id}')">Delete</button></div><button class="btn btn-primary btn-full" style="margin-top:10px" onclick="toggleTaskDone('${t.id}');closeModal('modal-task-detail')">${t.status==='Done'?'Mark Open':'Mark Done'}</button><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal('modal-task-detail')">Close</button>`;
+  const nextStatus=t.status==='Open'?'In Progress':t.status==='In Progress'?'Done':'Open';
+  const btnLabel=t.status==='Open'?'Mark In Progress':t.status==='In Progress'?'Mark Done':'Mark Open';
+  document.getElementById('modal-task-detail-content').innerHTML=`
+    <div class="modal-handle"></div>
+    <h2 style="margin-bottom:8px">${t.name}</h2>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="badge badge-fog">${t.type}</span>
+      <span class="badge ${t.priority==='High'?'badge-rust':t.priority==='Medium'?'badge-gold':'badge-fog'}">${t.priority}</span>
+      <span class="badge ${t.status==='Done'?'badge-rust':t.status==='In Progress'?'badge-gold':'badge-fog'}">${t.status}</span>
+      ${t.due?`<span class="badge badge-bone">${fmtDate(t.due)}</span>`:''}
+    </div>
+    ${t.notes?`<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--fog);font-weight:400">${t.notes}</p></div>`:''}
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="editTask('${t.id}')">Edit</button>
+      <button class="btn btn-danger" style="flex:1" onclick="deleteTask('${t.id}')">Delete</button>
+    </div>
+    <button class="btn btn-primary btn-full" style="margin-top:10px" onclick="cycleTaskStatus('${t.id}');closeModal('modal-task-detail')">${btnLabel}</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal('modal-task-detail')">Close</button>`;
   openModal('modal-task-detail');
 }
 function saveTask(){
@@ -771,40 +844,53 @@ function deleteTask(id){if(confirm('Delete this task?')){state.tasks=state.tasks
 function clearTaskForm(){['task-edit-id','t-name','t-due','t-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('t-type').value='Show Prep';document.getElementById('t-priority').value='High';document.getElementById('task-modal-title').textContent='Add Task';}
 
 // INCOME
+const fmtAmt=v=>'$'+(parseFloat(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const incRow=i=>`<div class="income-row" onclick="deleteIncome('${i.id}')">
+  <div style="flex:1;min-width:0">
+    <div class="income-name">${i.name}</div>
+    <div class="income-source">${i.source} · ${fmtDate(i.date)}</div>
+    ${i.total?`<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fog);margin-top:1px">Gig total: ${fmtAmt(i.total)}</div>`:''}
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div class="income-amount">${fmtAmt(i.amount)}</div>
+    ${i.total?`<div style="font-size:10px;color:var(--fog)">her share</div>`:''}
+  </div>
+</div>`;
+
 function renderIncome(){
   const allInc=[...state.income].sort((a,b)=>b.date.localeCompare(a.date));
   const mInc=allInc.filter(i=>fmtMonth(i.date)===thisMonth());
-  document.getElementById('inc-total').textContent='$'+mInc.reduce((a,b)=>a+(parseFloat(b.amount)||0),0).toFixed(0);
-  document.getElementById('inc-alltime').textContent='$'+allInc.reduce((a,b)=>a+(parseFloat(b.amount)||0),0).toFixed(0);
+  document.getElementById('inc-total').textContent=fmtAmt(mInc.reduce((a,b)=>a+(parseFloat(b.amount)||0),0));
+  document.getElementById('inc-alltime').textContent=fmtAmt(allInc.reduce((a,b)=>a+(parseFloat(b.amount)||0),0));
   const list=document.getElementById('income-list');
   if(!allInc.length){list.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><p>No income logged yet — tap +</p></div>`;return;}
   if(currentIncFilter==='month'){
-    list.innerHTML=mInc.length?`<div class="card" style="padding:8px 16px">${mInc.map(i=>`<div class="income-row" onclick="deleteIncome('${i.id}')"><div><div class="income-name">${i.name}</div><div class="income-source">${i.source} · ${fmtDate(i.date)}</div></div><div class="income-amount">$${parseFloat(i.amount||0).toFixed(0)}</div></div>`).join('')}</div>`:`<div class="card"><p style="color:var(--fog);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">No income this month</p></div>`;
+    list.innerHTML=mInc.length?`<div class="card" style="padding:8px 16px">${mInc.map(i=>incRow(i)).join('')}</div>`:`<div class="card"><p style="color:var(--fog);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">No income this month</p></div>`;
   } else if(currentIncFilter==='stream'){
     const streams={};allInc.forEach(i=>{if(!streams[i.source])streams[i.source]=[];streams[i.source].push(i);});
     list.innerHTML=Object.entries(streams).sort((a,b)=>b[1].reduce((x,y)=>x+(parseFloat(y.amount)||0),0)-a[1].reduce((x,y)=>x+(parseFloat(y.amount)||0),0)).map(([src,items])=>{
       const tot=items.reduce((a,b)=>a+(parseFloat(b.amount)||0),0);
-      return`<div class="stream-group"><div class="stream-group-header"><span class="stream-group-name">${src}</span><span class="stream-group-total">$${tot.toFixed(0)}</span></div><div class="card" style="padding:8px 16px">${items.map(i=>`<div class="income-row" onclick="deleteIncome('${i.id}')"><div><div class="income-name">${i.name}</div><div class="income-source">${fmtDate(i.date)}</div></div><div class="income-amount">$${parseFloat(i.amount||0).toFixed(0)}</div></div>`).join('')}</div></div>`;
+      return`<div class="stream-group"><div class="stream-group-header"><span class="stream-group-name">${src}</span><span class="stream-group-total">${fmtAmt(tot)}</span></div><div class="card" style="padding:8px 16px">${items.map(i=>incRow(i)).join('')}</div></div>`;
     }).join('');
   } else {
     const months={};allInc.forEach(i=>{const m=fmtMonth(i.date);if(!months[m])months[m]=[];months[m].push(i);});
     list.innerHTML=Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,items])=>{
       const tot=items.reduce((a,b)=>a+(parseFloat(b.amount)||0),0);
       const label=new Date(m+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
-      return`<div class="stream-group"><div class="stream-group-header"><span class="stream-group-name">${label}</span><span class="stream-group-total">$${tot.toFixed(0)}</span></div><div class="card" style="padding:8px 16px">${items.map(i=>`<div class="income-row" onclick="deleteIncome('${i.id}')"><div><div class="income-name">${i.name}</div><div class="income-source">${i.source}</div></div><div class="income-amount">$${parseFloat(i.amount||0).toFixed(0)}</div></div>`).join('')}</div></div>`;
+      return`<div class="stream-group"><div class="stream-group-header"><span class="stream-group-name">${label}</span><span class="stream-group-total">${fmtAmt(tot)}</span></div><div class="card" style="padding:8px 16px">${items.map(i=>incRow(i)).join('')}</div></div>`;
     }).join('');
   }
 }
 function filterIncome(f,btn){currentIncFilter=f;document.querySelectorAll('#income-tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderIncome();}
 function saveIncome(){
   const id=document.getElementById('inc-edit-id').value;
-  const entry={id:id||Date.now().toString(),name:document.getElementById('i-name').value,amount:document.getElementById('i-amount').value,source:document.getElementById('i-source').value,date:document.getElementById('i-date').value,notes:document.getElementById('i-notes').value};
+  const entry={id:id||Date.now().toString(),name:document.getElementById('i-name').value,amount:document.getElementById('i-amount').value,total:document.getElementById('i-total').value||'',source:document.getElementById('i-source').value,date:document.getElementById('i-date').value,notes:document.getElementById('i-notes').value};
   if(!entry.name||!entry.amount||!entry.date)return alert('Name, amount, and date required');
   if(id){const i=state.income.findIndex(x=>x.id===id);state.income[i]=entry;}else state.income.push(entry);
   save();closeModal('modal-income');clearIncomeForm();renderIncome();renderDash();
 }
 function deleteIncome(id){if(confirm('Delete this entry?')){state.income=state.income.filter(i=>i.id!==id);save();renderIncome();renderDash();}}
-function clearIncomeForm(){['inc-edit-id','i-name','i-amount','i-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-source').value='Duo Show';document.getElementById('i-date').value=today();}
+function clearIncomeForm(){['inc-edit-id','i-name','i-amount','i-total','i-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-source').value='Duo Show';document.getElementById('i-date').value=today();}
 
 // CHECKLIST
 function renderChecklist(){
@@ -819,12 +905,6 @@ function renderChecklist(){
 function toggleCheck(k,v){if(!state.checklist[currentCheckMode])state.checklist[currentCheckMode]={};state.checklist[currentCheckMode][k]=v;save();renderChecklist();}
 function resetChecklist(){if(confirm('Reset checklist?')){state.checklist[currentCheckMode]={};save();renderChecklist();}}
 function showChecklist(mode,btn){currentCheckMode=mode;document.querySelectorAll('#page-check .tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderChecklist();}
-
-// RELEASE
-function saveRelease(){
-  state.release={single:document.getElementById('r-single').value,art:document.getElementById('r-art').value,video:document.getElementById('r-video').value,distro:document.getElementById('r-distro').value,notes:document.getElementById('r-notes').value};
-  save();closeModal('modal-release');renderReleaseDash();
-}
 
 // SEED TASKS — runs once, checks flag so it never overwrites real data
 function seedTasksIfEmpty(){
@@ -861,7 +941,6 @@ load();
 document.getElementById('i-date').value=today();
 document.getElementById('s-date').value=today();
 document.getElementById('fab-btn').style.display='none';
-seedTasksIfEmpty();
 renderDash();
 initFirebase();
 fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
