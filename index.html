@@ -213,12 +213,12 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
   <!-- FEEL GOOD METRICS -->
   <div class="section" style="padding-top:16px">
     <div style="margin-bottom:10px">
-      <div class="metric" style="background:var(--charcoal);border:1px solid var(--border);border-radius:4px;padding:16px">
+      <div class="metric" style="background:var(--charcoal);border:1px solid var(--border);border-radius:4px;padding:16px;cursor:pointer" onclick="jumpToIncome('month')">
         <div style="display:flex;align-items:baseline;gap:8px">
           <div class="metric-val" id="dash-month-total" style="color:var(--gold);font-size:42px">$0</div>
         </div>
         <div style="font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="dash-month-label">May 2026</div>
-        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);margin-top:4px">Jaden's earnings</div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);margin-top:4px">Jaden's earnings ↗</div>
       </div>
     </div>
     <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px">
@@ -234,10 +234,10 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
         <div class="metric-val" id="dash-shows-year" style="color:var(--gold)">0</div>
         <div class="metric-label" id="dash-shows-label">Shows this year</div>
       </div>
-      <div class="metric">
+      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
         <div class="metric-val" id="dash-best-month" style="color:var(--bone);font-size:22px">$0</div>
         <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="dash-best-month-label"></div>
-        <div class="metric-label" style="margin-top:2px">Best month ever</div>
+        <div class="metric-label" style="margin-top:2px">Best month ↗</div>
       </div>
     </div>
   </div>
@@ -304,26 +304,46 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
   <div class="section" style="padding-top:14px">
     <!-- STATS ROW -->
     <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div class="metric">
+      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('month')">
         <div class="metric-val" id="inc-total" style="color:var(--gold);font-size:22px">$0</div>
-        <div class="metric-label">This month</div>
+        <div class="metric-label">This month ↗</div>
       </div>
-      <div class="metric">
+      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
         <div class="metric-val" id="inc-alltime" style="color:var(--bone);font-size:22px">$0</div>
-        <div class="metric-label">All time</div>
+        <div class="metric-label">All time ↗</div>
       </div>
-      <div class="metric">
+      <div class="metric" style="cursor:pointer" onclick="jumpToIncome('all')">
         <div class="metric-val" id="inc-best" style="color:var(--bone);font-size:22px">$0</div>
         <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="inc-best-label"></div>
-        <div class="metric-label" style="margin-top:2px">Best month</div>
+        <div class="metric-label" style="margin-top:2px">Best month ↗</div>
       </div>
-      <div class="metric">
-        <div class="metric-val" id="inc-duo-month" style="color:var(--bone);font-size:22px">$0</div>
-        <div class="metric-label">Duo total — month</div>
-      </div>
-      <div class="metric">
-        <div class="metric-val" id="inc-kyle-month" style="color:var(--bone);font-size:22px">$0</div>
-        <div class="metric-label">Kyle's cut — month</div>
+      <!-- DUO TOTAL — expandable -->
+      <div class="metric" style="cursor:pointer" onclick="toggleDuoExpand()" id="duo-metric-card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="metric-val" id="inc-duo-month" style="color:var(--bone);font-size:22px">$0</div>
+          <span id="duo-expand-arrow" style="font-size:12px;color:var(--fog)">▼</span>
+        </div>
+        <div class="metric-label">Duo total ↕</div>
+        <!-- EXPANDED CONTENT -->
+        <div id="duo-expand-content" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="display:flex;gap:6px;margin-bottom:10px">
+            <button class="tab ${duoPeriod==='month'?'active':''}" id="duo-tab-month" onclick="event.stopPropagation();setDuoPeriod('month')" style="font-size:10px;padding:5px 10px">Month</button>
+            <button class="tab" id="duo-tab-year" onclick="event.stopPropagation();setDuoPeriod('year')" style="font-size:10px;padding:5px 10px">Year</button>
+            <button class="tab" id="duo-tab-all" onclick="event.stopPropagation();setDuoPeriod('all')" style="font-size:10px;padding:5px 10px">All Time</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Jaden</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold)" id="duo-jaden-val">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Kyle</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--bone)" id="duo-kyle-val">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px;border-top:1px solid var(--border)">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Total</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--white)" id="duo-total-val">$0</span>
+          </div>
+        </div>
       </div>
       <div class="metric" style="grid-column:1/-1">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -939,7 +959,20 @@ function renderShows(){
   list.innerHTML=calBadge+shows.map(s=>{
     const d=daysUntil(s.date);const isPast=s.date<today();
     const srcBadge=s.source==='cal'?`<span class="badge badge-gold" style="font-size:9px">Calendar</span>`:`<span class="badge badge-fog" style="font-size:9px">Manual</span>`;
-    return`<div class="show-card" onclick="openShowDetail('${s.id}','${s.source}')"><div class="card-row"><div><div class="show-title">${s.title||s.venue}</div><div class="show-meta">${fmtDate(s.date)}${s.time?' · '+fmtTime(s.time):''}</div>${s.notes?`<div class="show-meta" style="margin-top:2px">${s.notes}</div>`:''}</div><div style="text-align:right;flex-shrink:0;padding-top:2px">${isPast?`<span class="badge badge-fog">Done</span>`:`<div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">${fmtCountdown(d)}</div>`}</div></div><div style="margin-top:8px;display:flex;gap:6px">${srcBadge}</div></div>`;
+    // Find income entries matching this show date
+    let payoutHTML='';
+    if(isPast){
+      const matched=state.income.filter(i=>i.date===s.date&&(i.source==='Duo Show'||i.source==='Solo Show'||i.source==='Private Event'));
+      if(matched.length){
+        const check=matched.reduce((a,b)=>a+(parseFloat(b.amount)||0),0);
+        const tips=matched.reduce((a,b)=>a+(parseFloat(b.tips)||0),0);
+        payoutHTML=`<div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fog)">Check ${fmtAmt(check)}</span>
+          ${tips?`<span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--bone)">Tips ${fmtAmt(tips)}</span>`:''}
+        </div>`;
+      }
+    }
+    return`<div class="show-card" onclick="openShowDetail('${s.id}','${s.source}')"><div class="card-row"><div><div class="show-title">${s.title||s.venue}</div><div class="show-meta">${fmtDate(s.date)}${s.time?' · '+fmtTime(s.time):''}</div>${s.notes?`<div class="show-meta" style="margin-top:2px">${s.notes}</div>`:''}</div><div style="text-align:right;flex-shrink:0;padding-top:2px">${isPast?`<span class="badge badge-fog">Done</span>`:`<div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">${fmtCountdown(d)}</div>`}</div></div>${payoutHTML}<div style="margin-top:8px;display:flex;gap:6px">${srcBadge}</div></div>`;
   }).join('');
 }
 function filterShows(f,btn){currentShowFilter=f;document.querySelectorAll('#shows-tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderShows();}
@@ -1077,6 +1110,54 @@ function editTask(id){
 }
 function deleteTask(id){if(confirm('Delete this task?')){state.tasks=state.tasks.filter(t=>t.id!==id);save();closeModal('modal-task-detail');renderTasks();renderDash();}}
 function clearTaskForm(){['task-edit-id','t-name','t-due','t-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('t-type').value='Show Prep';document.getElementById('t-priority').value='High';document.getElementById('task-modal-title').textContent='Add Task';}
+
+// INCOME NAV SHORTCUTS
+function jumpToIncome(filter){
+  const navBtns=document.querySelectorAll('#nav .nav-btn');
+  // Income is 4th nav button
+  if(navBtns[3])goTo('income',navBtns[3]);
+  currentIncFilter=filter;
+  document.querySelectorAll('#income-tabs .tab').forEach(t=>t.classList.remove('active'));
+  const tabMap={'month':0,'stream':1,'venue':2,'year':3,'all':4};
+  const tabs=document.querySelectorAll('#income-tabs .tab');
+  if(tabs[tabMap[filter]])tabs[tabMap[filter]].classList.add('active');
+  renderIncome();
+}
+
+// DUO EXPAND
+let duoExpanded=false;
+let duoPeriod='month';
+
+function toggleDuoExpand(){
+  duoExpanded=!duoExpanded;
+  const content=document.getElementById('duo-expand-content');
+  const arrow=document.getElementById('duo-expand-arrow');
+  if(content)content.style.display=duoExpanded?'block':'none';
+  if(arrow)arrow.textContent=duoExpanded?'▲':'▼';
+  if(duoExpanded)setDuoPeriod('month');
+}
+
+function setDuoPeriod(p){
+  duoPeriod=p;
+  ['month','year','all'].forEach(id=>{
+    const el=document.getElementById('duo-tab-'+id);
+    if(el)el.classList.toggle('active',id===p);
+  });
+  updateDuoExpand();
+}
+
+function updateDuoExpand(){
+  const thisYear=today().substring(0,4);
+  let inc=[...state.income].filter(i=>i.source==='Duo Show'||i.source==='Private Event');
+  if(duoPeriod==='month')inc=inc.filter(i=>fmtMonth(i.date)===thisMonth());
+  else if(duoPeriod==='year')inc=inc.filter(i=>i.date&&i.date.startsWith(thisYear));
+  const jaden=inc.reduce((a,b)=>{const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;return a+chk+(tips/2);},0);
+  const kyle=inc.reduce((a,b)=>{const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;return a+chk+(tips/2);},0);
+  const total=jaden+kyle;
+  const jEl=document.getElementById('duo-jaden-val');const kEl=document.getElementById('duo-kyle-val');const tEl=document.getElementById('duo-total-val');
+  if(jEl)jEl.textContent=fmtAmt(jaden);if(kEl)kEl.textContent=fmtAmt(kyle);if(tEl)tEl.textContent=fmtAmt(total);
+  const duoEl=document.getElementById('inc-duo-month');if(duoEl)duoEl.textContent=fmtAmt(total);
+}
 
 // INCOME
 const fmtAmt=v=>'$'+(parseFloat(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1230,13 +1311,6 @@ function renderIncome(){
   const bestEl=document.getElementById('inc-best');if(bestEl)bestEl.textContent=fmtAmt(bestAmt);
   const bestLabelEl=document.getElementById('inc-best-label');if(bestLabelEl)bestLabelEl.textContent=bestMonthLabel;
   const duoEl=document.getElementById('inc-duo-month');if(duoEl)duoEl.textContent=fmtAmt(duoMonth);
-  // Kyle's cut = his check (same as Jaden's) + his half of tips
-  const kyleMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
-    const chk=parseFloat(b.amount)||0;
-    const tips=parseFloat(b.tips)||0;
-    return a+chk+(tips/2);
-  },0);
-  const kyleEl=document.getElementById('inc-kyle-month');if(kyleEl)kyleEl.textContent=fmtAmt(kyleMonth);
   const ttPctEl=document.getElementById('inc-tt-pct');if(ttPctEl)ttPctEl.textContent=ttPct+'%';
   const showPctEl=document.getElementById('inc-show-pct');if(showPctEl)showPctEl.textContent=showPct+'%';
   const ttBar=document.getElementById('inc-tt-bar');if(ttBar)ttBar.style.width=ttPct+'%';
