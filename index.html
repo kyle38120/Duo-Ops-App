@@ -1054,16 +1054,44 @@ function openIncomeDetail(id){
   const tips=parseFloat(i.tips)||0;
   const total=parseFloat(i.total)||0;
   const earned=check+tips;
+  const isDuo=i.source==='Duo Show'||i.source==='Private Event';
+  const gigTotal=total||(isDuo?check*2:0);
+  const kyleShare=isDuo?gigTotal-check:0;
+
+  let amountHTML='';
+  if(isDuo&&gigTotal){
+    // Show as gig total + split breakdown
+    amountHTML=`
+      <div class="card" style="margin-bottom:16px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+          <span style="font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog)">Gig Total</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.05em;color:var(--white)">${fmtAmt(gigTotal)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Jaden</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--gold)">${fmtAmt(check)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline${tips?';margin-bottom:6px':''}">
+          <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Kyle</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--bone)">${fmtAmt(kyleShare)}</span>
+        </div>
+        ${tips?`<div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:8px;margin-top:2px;border-top:1px solid var(--border)"><span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Tips (Jaden)</span><span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--gold)">${fmtAmt(tips)}</span></div>`:''}
+      </div>`;
+  } else {
+    // Solo / TikTok / other — simple display
+    amountHTML=`
+      <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        ${check?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(check)}</div><div class="metric-label">Earned</div></div>`:''}
+        ${tips?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(tips)}</div><div class="metric-label">Tips</div></div>`:''}
+        ${tips?`<div class="metric" style="grid-column:1/-1"><div class="metric-val" style="color:var(--bone);font-size:22px">${fmtAmt(earned)}</div><div class="metric-label">Total</div></div>`:''}
+      </div>`;
+  }
+
   document.getElementById('modal-income-detail-content').innerHTML=`
     <div class="modal-handle"></div>
     <h2 style="margin-bottom:4px">${i.name}</h2>
     <p style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:16px">${i.source} · ${fmtDate(i.date)}</p>
-    <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      ${check?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(check)}</div><div class="metric-label">Check</div></div>`:''}
-      ${tips?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(tips)}</div><div class="metric-label">Tips</div></div>`:''}
-      <div class="metric" style="${check&&tips?'grid-column:1/-1':''}"><div class="metric-val" style="color:var(--bone);font-size:22px">${fmtAmt(earned)}</div><div class="metric-label">Her total</div></div>
-      ${total?`<div class="metric"><div class="metric-val" style="color:var(--fog);font-size:22px">${fmtAmt(total)}</div><div class="metric-label">Gig total</div></div>`:''}
-    </div>
+    ${amountHTML}
     ${i.notes?`<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--fog);font-weight:400">${i.notes}</p></div>`:''}
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" style="flex:1" onclick="editIncome('${i.id}')">Edit</button>
