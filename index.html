@@ -454,6 +454,12 @@ function load(){
 }
 
 // Firebase realtime listener — updates all clients instantly
+function normalizeArr(val){
+  if(!val)return[];
+  if(Array.isArray(val))return val.filter(Boolean);
+  return Object.values(val);
+}
+
 function initFirebase(){
   const auth=firebase.auth();
   showSyncStatus('Connecting...','var(--fog)');
@@ -463,9 +469,13 @@ function initFirebase(){
         const data=snap.val();
         if(data){
           state=Object.assign({shows:[],tasks:[],income:[],checklist:{pre:{},post:{}},release:{},dumps:[],status:{}},data);
+          // Normalize — Firebase may return objects instead of arrays
+          state.tasks=normalizeArr(state.tasks);
+          state.income=normalizeArr(state.income);
+          state.shows=normalizeArr(state.shows);
+          state.dumps=normalizeArr(state.dumps);
           if(!state.checklist)state.checklist={pre:{},post:{}};
           if(!state.status)state.status={};
-          if(!state.dumps)state.dumps=[];
           try{localStorage.setItem('duoops2',JSON.stringify(state));}catch(e){}
         }
         seedTasksIfEmpty();
