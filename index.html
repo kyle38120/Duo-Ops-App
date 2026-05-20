@@ -321,6 +321,10 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
         <div class="metric-val" id="inc-duo-month" style="color:var(--bone);font-size:22px">$0</div>
         <div class="metric-label">Duo total — month</div>
       </div>
+      <div class="metric">
+        <div class="metric-val" id="inc-kyle-month" style="color:var(--bone);font-size:22px">$0</div>
+        <div class="metric-label">Kyle's cut — month</div>
+      </div>
       <div class="metric" style="grid-column:1/-1">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--fog)">TikTok</span>
@@ -441,10 +445,10 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
     <select id="i-source"><option>Duo Show</option><option>Solo Show</option><option>TikTok Live</option><option>TikTok Gifts</option><option>IG Live</option><option>Private Event</option><option>Other</option></select>
   </div>
   <div style="display:flex;gap:10px">
-    <div class="form-group" style="flex:1"><label>Check ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">her share</span></label><input id="i-amount" type="number" placeholder="0" min="0" step="0.01"></div>
+    <div class="form-group" style="flex:1"><label>Check ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">Jaden's share</span></label><input id="i-amount" type="number" placeholder="0" min="0" step="0.01"></div>
     <div class="form-group" style="flex:1"><label>Tips ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">total jar</span></label><input id="i-tips" type="number" placeholder="0" min="0" step="0.01"></div>
   </div>
-  <div class="form-group"><label>Gig Total ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">optional — full show amount before split</span></label><input id="i-total" type="number" placeholder="0" min="0" step="0.01"></div>
+  <div class="form-group"><label>Gig Total ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">venue check only, before split</span></label><input id="i-total" type="number" placeholder="0" min="0" step="0.01"></div>
   <div class="form-group"><label>Date</label><input id="i-date" type="date"></div>
   <div class="form-group"><label>Notes</label><textarea id="i-notes" placeholder="What drove this income?"></textarea></div>
   <div style="display:flex;gap:10px;margin-top:8px">
@@ -676,7 +680,7 @@ function goTo(page,btn){
   renderPage(page);
 }
 function renderPage(p){if(p==='dash')renderDash();else if(p==='shows')renderShows();else if(p==='tasks')renderTasks();else if(p==='income')renderIncome();else if(p==='check')renderChecklist();}
-function handleFab(){if(currentPage==='tasks')openModal('modal-task');else if(currentPage==='income')openModal('modal-income');else if(currentPage==='check')return;else openModal('modal-task');}
+function handleFab(){if(currentPage==='tasks')openModal('modal-task');else if(currentPage==='income'){clearIncomeForm();openModal('modal-income');}else if(currentPage==='check')return;else openModal('modal-task');}
 
 function openModal(id){
   document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';
@@ -1226,6 +1230,13 @@ function renderIncome(){
   const bestEl=document.getElementById('inc-best');if(bestEl)bestEl.textContent=fmtAmt(bestAmt);
   const bestLabelEl=document.getElementById('inc-best-label');if(bestLabelEl)bestLabelEl.textContent=bestMonthLabel;
   const duoEl=document.getElementById('inc-duo-month');if(duoEl)duoEl.textContent=fmtAmt(duoMonth);
+  // Kyle's cut = his check (same as Jaden's) + his half of tips
+  const kyleMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
+    const chk=parseFloat(b.amount)||0;
+    const tips=parseFloat(b.tips)||0;
+    return a+chk+(tips/2);
+  },0);
+  const kyleEl=document.getElementById('inc-kyle-month');if(kyleEl)kyleEl.textContent=fmtAmt(kyleMonth);
   const ttPctEl=document.getElementById('inc-tt-pct');if(ttPctEl)ttPctEl.textContent=ttPct+'%';
   const showPctEl=document.getElementById('inc-show-pct');if(showPctEl)showPctEl.textContent=showPct+'%';
   const ttBar=document.getElementById('inc-tt-bar');if(ttBar)ttBar.style.width=ttPct+'%';
@@ -1346,9 +1357,15 @@ function saveIncome(){
 }
 function deleteIncome(id){if(confirm('Delete this entry?')){state.income=state.income.filter(i=>i.id!==id);save();renderIncome();renderDash();}}
 function clearIncomeForm(){
-  ['inc-edit-id','i-name','i-amount','i-tips','i-total','i-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('inc-edit-id').value='';
+  document.getElementById('i-name').value='';
+  document.getElementById('i-amount').value='';
+  document.getElementById('i-tips').value='';
+  document.getElementById('i-total').value='';
+  document.getElementById('i-notes').value='';
   document.getElementById('i-source').value='Duo Show';
   document.getElementById('i-date').value=today();
+  document.getElementById('income-modal-title').textContent='Log Income';
 }
 
 // CHECKLIST
