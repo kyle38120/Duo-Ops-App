@@ -766,16 +766,23 @@ function renderDash(){
   },0);
   const mTotal=herEarned(mInc);
   const yTotal=herEarned(yInc);
-  // Best month ever
-  const byMonth={};state.income.forEach(i=>{const m=fmtMonth(i.date);byMonth[m]=(byMonth[m]||0)+(parseFloat(i.amount)||0)+(parseFloat(i.tips)||0);});
+  // Best month ever — use same herEarned logic
+  const byMonth={};state.income.forEach(i=>{
+    const chk=parseFloat(i.amount)||0;
+    const tips=parseFloat(i.tips)||0;
+    const isDuo=i.source==='Duo Show'||i.source==='Private Event';
+    const jadenTips=isDuo?tips/2:tips;
+    const m=fmtMonth(i.date);
+    byMonth[m]=(byMonth[m]||0)+chk+jadenTips;
+  });
   const bestEntry=Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
   const bestAmt=bestEntry?bestEntry[1]:0;
   const bestMonthLabel=bestEntry?new Date(bestEntry[0]+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
   if(bestEntry)bestMonthKey=bestEntry[0];
-  // Duo total this month
+  // Duo total this month — full venue check (both shares), tips shown separately
   const duoMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
-    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
-    return a+(gig||chk*2)+tips;
+    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;
+    return a+(gig||chk*2);
   },0);
   document.getElementById('dash-month-total').textContent='$'+mTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('dash-year-total').textContent='$'+yTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -1168,10 +1175,10 @@ function toggleMonthExpand(){
 function updateMonthExpand(){
   const thisYear=today().substring(0,4);
   const prevMonth=new Date(new Date().getFullYear(),new Date().getMonth()-1,1).toISOString().substring(0,7);
-  const earnedAmt=i=>{const chk=parseFloat(i.amount)||0;const tips=parseFloat(i.tips)||0;const isDuo=i.source==='Duo Show'||i.source==='Private Event';return chk+(isDuo?tips/2:tips);};
-  const mThis=state.income.filter(i=>fmtMonth(i.date)===thisMonth()).reduce((a,b)=>a+earnedAmt(b),0);
-  const mLast=state.income.filter(i=>fmtMonth(i.date)===prevMonth).reduce((a,b)=>a+earnedAmt(b),0);
-  const mYear=state.income.filter(i=>i.date&&i.date.startsWith(thisYear)).reduce((a,b)=>a+earnedAmt(b),0);
+  const earned=i=>{const chk=parseFloat(i.amount)||0;const tips=parseFloat(i.tips)||0;const isDuo=i.source==='Duo Show'||i.source==='Private Event';return chk+(isDuo?tips/2:tips);};
+  const mThis=state.income.filter(i=>fmtMonth(i.date)===thisMonth()).reduce((a,b)=>a+earned(b),0);
+  const mLast=state.income.filter(i=>fmtMonth(i.date)===prevMonth).reduce((a,b)=>a+earned(b),0);
+  const mYear=state.income.filter(i=>i.date&&i.date.startsWith(thisYear)).reduce((a,b)=>a+earned(b),0);
   const tEl=document.getElementById('month-this-val');const lEl=document.getElementById('month-last-val');const yEl=document.getElementById('month-year-val');
   if(tEl)tEl.textContent=fmtAmt(mThis);if(lEl)lEl.textContent=fmtAmt(mLast);if(yEl)yEl.textContent=fmtAmt(mYear);
 }
@@ -1222,9 +1229,18 @@ function updateDuoExpand(){
   let inc=[...state.income].filter(i=>i.source==='Duo Show'||i.source==='Private Event');
   if(duoPeriod==='month')inc=inc.filter(i=>fmtMonth(i.date)===thisMonth());
   else if(duoPeriod==='year')inc=inc.filter(i=>i.date&&i.date.startsWith(thisYear));
-  const jaden=inc.reduce((a,b)=>{const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;return a+chk+(tips/2);},0);
-  const kyle=inc.reduce((a,b)=>{const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;return a+chk+(tips/2);},0);
-  const total=jaden+kyle;
+  // Jaden = her check + half tips
+  const jaden=inc.reduce((a,b)=>{
+    const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
+    return a+chk+(tips/2);
+  },0);
+  // Kyle = same as Jaden (50/50 split)
+  const kyle=jaden;
+  // Duo total = full venue check (gig total or check*2)
+  const total=inc.reduce((a,b)=>{
+    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;
+    return a+(gig||chk*2);
+  },0);
   const jEl=document.getElementById('duo-jaden-val');const kEl=document.getElementById('duo-kyle-val');const tEl=document.getElementById('duo-total-val');
   if(jEl)jEl.textContent=fmtAmt(jaden);if(kEl)kEl.textContent=fmtAmt(kyle);if(tEl)tEl.textContent=fmtAmt(total);
   const duoEl=document.getElementById('inc-duo-month');if(duoEl)duoEl.textContent=fmtAmt(total);
@@ -1365,10 +1381,10 @@ function renderIncome(){
   const bestEntry=Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
   const bestAmt=bestEntry?bestEntry[1]:0;
   const bestMonthLabel=bestEntry?new Date(bestEntry[0]+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
-  // Duo total this month
-  const duoMonth=mInc.filter(i=>i.source==='Duo Show').reduce((a,b)=>{
-    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
-    return a+(gig||chk*2)+tips;
+  // Duo total this month — full venue check (both shares)
+  const duoMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
+    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;
+    return a+(gig||chk*2);
   },0);
   // TikTok vs shows split this year
   const ttTotal=yInc.filter(i=>i.source==='TikTok Live'||i.source==='TikTok Gifts').reduce((a,b)=>a+earnedAmt(b),0);
