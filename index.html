@@ -144,8 +144,53 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 .stream-group-name{font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--bone)}
 .stream-group-total{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.06em;color:var(--gold)}
 </style>
+<style>
+#pin-screen{position:fixed;inset:0;background:var(--black);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+#pin-screen.hidden{display:none}
+.pin-logo{width:80px;height:80px;border-radius:8px;object-fit:cover;margin-bottom:20px}
+.pin-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.15em;color:var(--white);margin-bottom:4px}
+.pin-subtitle{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-bottom:40px}
+.pin-dots{display:flex;gap:16px;margin-bottom:40px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--fog);transition:all .15s}
+.pin-dot.filled{background:var(--rust);border-color:var(--rust)}
+.pin-dot.error{background:var(--rust);border-color:var(--rust);animation:shake .3s ease}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
+.pin-btn{background:var(--charcoal);border:1px solid var(--border);border-radius:4px;padding:18px;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.05em;color:var(--white);cursor:pointer;transition:all .1s;text-align:center}
+.pin-btn:active{background:var(--ash);transform:scale(.95)}
+.pin-btn.del{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:.1em;color:var(--fog)}
+.pin-error{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--rust);height:20px;margin-top:-20px;margin-bottom:10px;text-align:center}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
 </head>
 <body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <img class="pin-logo" src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg">
+  <div class="pin-title">Duo Ops</div>
+  <div class="pin-subtitle">Enter PIN to continue</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-grid">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <div></div>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+  </div>
+</div>
 
 <!-- DASHBOARD -->
 <div id="page-dash" class="page active">
@@ -587,7 +632,7 @@ function normalizeArr(val){
 function initFirebase(){
   const auth=firebase.auth();
   showSyncStatus('Connecting...','var(--fog)');
-  auth.signInWithEmailAndPassword('jadenmoney1994@gmail.com','Paramore1994!')
+  auth.signInAnonymously()
     .then(()=>{
       DB_REF.on('value',(snap)=>{
         const data=snap.val();
@@ -1350,11 +1395,58 @@ function seedTasksIfEmpty(){
   save();
 }
 
+// PIN
+const PIN_CORRECT='4110';
+const PIN_KEY='duoops_unlocked';
+let pinEntry='';
+
+function checkPinUnlocked(){
+  try{return localStorage.getItem(PIN_KEY)==='1';}catch(e){return false;}
+}
+function unlockApp(){
+  try{localStorage.setItem(PIN_KEY,'1');}catch(e){}
+  document.getElementById('pin-screen').classList.add('hidden');
+}
+function pinPress(digit){
+  if(pinEntry.length>=4)return;
+  pinEntry+=digit;
+  updatePinDots();
+  if(pinEntry.length===4){
+    if(pinEntry===PIN_CORRECT){
+      setTimeout(()=>unlockApp(),150);
+    } else {
+      document.getElementById('pin-error').textContent='Incorrect PIN';
+      document.querySelectorAll('.pin-dot').forEach(d=>{d.classList.add('error');});
+      setTimeout(()=>{
+        pinEntry='';
+        updatePinDots();
+        document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('error'));
+        document.getElementById('pin-error').textContent='';
+      },700);
+    }
+  }
+}
+function pinDel(){
+  pinEntry=pinEntry.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent='';
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const dot=document.getElementById('pd'+i);
+    dot.classList.toggle('filled',i<pinEntry.length);
+    dot.classList.remove('error');
+  }
+}
+
 // INIT
 load();
 document.getElementById('i-date').value=today();
 document.getElementById('s-date').value=today();
 document.getElementById('fab-btn').style.display='none';
+if(checkPinUnlocked()){
+  document.getElementById('pin-screen').classList.add('hidden');
+}
 renderDash();
 initFirebase();
 fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
