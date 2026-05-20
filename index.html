@@ -15,17 +15,17 @@
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
 }
 body{background:var(--black);color:var(--bone);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:300;letter-spacing:.03em;min-height:100vh;overscroll-behavior:none;position:relative}
-body::before{content:'';position:fixed;inset:0;background-image:url('https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky-Pattern-Square.jpg');background-size:340px;background-repeat:repeat;opacity:.04;pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background-image:url('https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky-Pattern-Square.jpg');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:.04;pointer-events:none;z-index:0}
 .page{position:relative;z-index:1}
 
 /* NAV */
-#nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);border-top:1px solid rgba(235,32,61,.2);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+#nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);border-top:1px solid rgba(235,32,61,.2);display:flex;z-index:100;padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 4px 12px;background:none;border:none;color:var(--fog);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:color .15s}
 .nav-btn.active{color:var(--rust)}
 .nav-btn svg{width:26px;height:26px;stroke-width:1.8}
 
 /* PAGES */
-.page{display:none;padding:0 0 100px;min-height:100vh}
+.page{display:none;padding:0 0 120px;min-height:100vh}
 .page.active{display:block}
 
 /* HEADER */
@@ -147,15 +147,18 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 <div id="page-dash" class="page active">
   <div class="page-header">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:10px">
-        <img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0">
-        <h1>Duo Ops</h1>
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0">
+        <div>
+          <h1>Duo Ops</h1>
+          <p id="dash-date"></p>
+        </div>
       </div>
-        <p id="dash-date"></p>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.15em;color:var(--rust);border:1px solid rgba(235,32,61,.3);padding:4px 10px;border-radius:2px">Live</div>
+        <span id="sync-status" style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);transition:opacity .5s">Connecting...</span>
       </div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.15em;color:var(--rust);border:1px solid rgba(235,32,61,.3);padding:4px 10px;border-radius:2px">Live</div>
     </div>
-    <div style="margin-top:6px;height:14px"><span id="sync-status" style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);transition:opacity .5s">Connecting...</span></div>
   </div>
 
   <div class="section" style="padding-top:16px">
@@ -205,7 +208,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- SHOWS -->
 <div id="page-shows" class="page">
-  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Shows</h1><p>Performance tracker</p></div></div></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Shows</h1><p>Performance tracker</p></div></div></div>
   <div class="tabs" id="shows-tabs">
     <button class="tab active" onclick="filterShows('upcoming',this)">Upcoming</button>
     <button class="tab" onclick="filterShows('past',this)">Past</button>
@@ -216,7 +219,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- TASKS -->
 <div id="page-tasks" class="page">
-  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Tasks</h1><p>Execution engine</p></div></div></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Tasks</h1><p>Execution engine</p></div></div></div>
   <div class="tabs" id="tasks-tabs">
     <button class="tab active" onclick="filterTasks('all',this)">All</button>
     <button class="tab" onclick="filterTasks('Show Prep',this)">Show Prep</button>
@@ -229,7 +232,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- INCOME -->
 <div id="page-income" class="page">
-  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Income</h1><p>Business intelligence</p></div></div></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Income</h1><p>Business intelligence</p></div></div></div>
   <div class="tabs" id="income-tabs">
     <button class="tab active" onclick="filterIncome('month',this)">This Month</button>
     <button class="tab" onclick="filterIncome('stream',this)">By Stream</button>
@@ -252,7 +255,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- CHECKLIST -->
 <div id="page-check" class="page">
-  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Checklist</h1><p>Show day gear</p></div></div></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Checklist</h1><p>Show day gear</p></div></div></div>
   <div class="tabs">
     <button class="tab active" onclick="showChecklist('pre',this)">Pre-Show</button>
     <button class="tab" onclick="showChecklist('post',this)">Post-Show</button>
