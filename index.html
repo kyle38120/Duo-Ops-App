@@ -397,7 +397,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
   </div>
   <div style="display:flex;gap:10px">
     <div class="form-group" style="flex:1"><label>Check ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">her share</span></label><input id="i-amount" type="number" placeholder="0" min="0" step="0.01"></div>
-    <div class="form-group" style="flex:1"><label>Tips ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">optional</span></label><input id="i-tips" type="number" placeholder="0" min="0" step="0.01"></div>
+    <div class="form-group" style="flex:1"><label>Tips ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">total jar</span></label><input id="i-tips" type="number" placeholder="0" min="0" step="0.01"></div>
   </div>
   <div class="form-group"><label>Gig Total ($) <span style="color:var(--fog);font-size:11px;letter-spacing:0;text-transform:none;font-weight:400">optional — full show amount before split</span></label><input id="i-total" type="number" placeholder="0" min="0" step="0.01"></div>
   <div class="form-group"><label>Date</label><input id="i-date" type="date"></div>
@@ -663,7 +663,13 @@ function renderDash(){
   const thisYear=today().substring(0,4);
   const mInc=state.income.filter(i=>fmtMonth(i.date)===thisMonth());
   const yInc=state.income.filter(i=>i.date&&i.date.startsWith(thisYear));
-  const herEarned=arr=>arr.reduce((a,b)=>a+(parseFloat(b.amount)||0)+(parseFloat(b.tips)||0),0);
+  const herEarned=arr=>arr.reduce((a,b)=>{
+    const check=parseFloat(b.amount)||0;
+    const tipsTotal=parseFloat(b.tips)||0;
+    const isDuo=b.source==='Duo Show'||b.source==='Private Event';
+    const jadenTips=isDuo?tipsTotal/2:tipsTotal;
+    return a+check+jadenTips;
+  },0);
   const mTotal=herEarned(mInc);
   const yTotal=herEarned(yInc);
   // Best month ever
@@ -1028,22 +1034,24 @@ const fmtAmt=v=>'$'+(parseFloat(v)||0).toLocaleString('en-US',{minimumFractionDi
 const fmtAmtShort=v=>'$'+(parseFloat(v)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
 const incRow=i=>{
   const check=parseFloat(i.amount)||0;
-  const tips=parseFloat(i.tips)||0;
+  const tipsTotal=parseFloat(i.tips)||0;
   const total=parseFloat(i.total)||0;
-  const earned=check+tips;
+  const isDuo=i.source==='Duo Show'||i.source==='Private Event';
+  const jadenTips=isDuo?tipsTotal/2:tipsTotal;
+  const earned=check+jadenTips;
   return`<div class="income-row" onclick="openIncomeDetail('${i.id}')">
     <div style="flex:1;min-width:0">
       <div class="income-name">${i.name}</div>
       <div class="income-source">${i.source} · ${fmtDate(i.date)}</div>
-      <div style="display:flex;gap:10px;margin-top:3px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;margin-top:3px;flex-wrap:wrap;align-items:center">
         ${check?`<span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fog)">Check ${fmtAmt(check)}</span>`:''}
-        ${tips?`<span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)">Tips ${fmtAmt(tips)}</span>`:''}
-        ${total?`<span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fog)">Gig total ${fmtAmt(total)}</span>`:''}
+        ${tipsTotal?`<span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--bone)">Tips ${fmtAmt(tipsTotal)}</span>`:''}
+        ${total?`<span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fog)">Gig ${fmtAmt(total)}</span>`:''}
       </div>
     </div>
     <div style="text-align:right;flex-shrink:0;padding-left:8px">
       <div class="income-amount">${fmtAmt(earned)}</div>
-      ${tips?`<div style="font-size:10px;color:var(--fog)">incl. tips</div>`:''}
+      ${jadenTips?`<div style="font-size:10px;color:var(--fog)">incl. tips</div>`:''}
     </div>
   </div>`;
 };
@@ -1051,16 +1059,19 @@ const incRow=i=>{
 function openIncomeDetail(id){
   const i=state.income.find(x=>x.id===id);if(!i)return;
   const check=parseFloat(i.amount)||0;
-  const tips=parseFloat(i.tips)||0;
+  const tipsTotal=parseFloat(i.tips)||0;
   const total=parseFloat(i.total)||0;
-  const earned=check+tips;
   const isDuo=i.source==='Duo Show'||i.source==='Private Event';
-  const gigTotal=total||(isDuo?check*2:0);
-  const kyleShare=isDuo?gigTotal-check:0;
+  // Tips are split 50/50 for duo shows
+  const jadenTips=isDuo?tipsTotal/2:tipsTotal;
+  const kyleTips=isDuo?tipsTotal/2:0;
+  const gigTotal=total||(isDuo?(check*2)+tipsTotal:check+tipsTotal);
+  const kyleCheck=isDuo?gigTotal-tipsTotal-check:0;
+  const jadenTotal=check+jadenTips;
+  const kyleTotal=kyleCheck+kyleTips;
 
   let amountHTML='';
   if(isDuo&&gigTotal){
-    // Show as gig total + split breakdown
     amountHTML=`
       <div class="card" style="margin-bottom:16px;padding:14px 16px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
@@ -1068,22 +1079,37 @@ function openIncomeDetail(id){
           <span style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.05em;color:var(--white)">${fmtAmt(gigTotal)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-          <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Jaden</span>
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--gold)">${fmtAmt(check)}</span>
+          <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Jaden${tipsTotal?' (check + tips)':''}</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--gold)">${fmtAmt(jadenTotal)}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline${tips?';margin-bottom:6px':''}">
-          <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Kyle</span>
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--bone)">${fmtAmt(kyleShare)}</span>
+        <div style="display:flex;justify-content:space-between;align-items:baseline${tipsTotal?';margin-bottom:10px':''}">
+          <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Kyle${tipsTotal?' (check + tips)':''}</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--bone)">${fmtAmt(kyleTotal)}</span>
         </div>
-        ${tips?`<div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:8px;margin-top:2px;border-top:1px solid var(--border)"><span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Tips (Jaden)</span><span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--gold)">${fmtAmt(tips)}</span></div>`:''}
+        ${tipsTotal?`
+        <div style="padding-top:10px;border-top:1px solid var(--border)">
+          <div style="font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--fog);margin-bottom:6px">Tip jar breakdown</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-size:12px;color:var(--fog)">Total jar</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--bone)">${fmtAmt(tipsTotal)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-size:12px;color:var(--fog)">Jaden's tips</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--gold)">${fmtAmt(jadenTips)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font-size:12px;color:var(--fog)">Kyle's tips</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--bone)">${fmtAmt(kyleTips)}</span>
+          </div>
+        </div>`:''}
       </div>`;
   } else {
-    // Solo / TikTok / other — simple display
+    const earned=check+tipsTotal;
     amountHTML=`
       <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         ${check?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(check)}</div><div class="metric-label">Earned</div></div>`:''}
-        ${tips?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(tips)}</div><div class="metric-label">Tips</div></div>`:''}
-        ${tips?`<div class="metric" style="grid-column:1/-1"><div class="metric-val" style="color:var(--bone);font-size:22px">${fmtAmt(earned)}</div><div class="metric-label">Total</div></div>`:''}
+        ${tipsTotal?`<div class="metric"><div class="metric-val" style="color:var(--bone);font-size:22px">${fmtAmt(tipsTotal)}</div><div class="metric-label">Tips</div></div>`:''}
+        ${tipsTotal?`<div class="metric" style="grid-column:1/-1"><div class="metric-val" style="color:var(--bone);font-size:22px">${fmtAmt(earned)}</div><div class="metric-label">Total</div></div>`:''}
       </div>`;
   }
 
@@ -1118,7 +1144,13 @@ function editIncome(id){
 }
 
 function renderIncome(){
-  const earnedAmt=i=>(parseFloat(i.amount)||0)+(parseFloat(i.tips)||0);
+  const earnedAmt=i=>{
+    const check=parseFloat(i.amount)||0;
+    const tipsTotal=parseFloat(i.tips)||0;
+    const isDuo=i.source==='Duo Show'||i.source==='Private Event';
+    const jadenTips=isDuo?tipsTotal/2:tipsTotal;
+    return check+jadenTips;
+  };
   const allInc=[...state.income].sort((a,b)=>b.date.localeCompare(a.date));
   const mInc=allInc.filter(i=>fmtMonth(i.date)===thisMonth());
   const thisYear=today().substring(0,4);
