@@ -477,9 +477,13 @@ function initFirebase(){
           if(!state.checklist)state.checklist={pre:{},post:{}};
           if(!state.status)state.status={};
           try{localStorage.setItem('duoops2',JSON.stringify(state));}catch(e){}
+          // Diagnostic — shows in sync status
+          showSyncStatus(`Synced · ${state.tasks.length} tasks · ${state.income.length} income`,'var(--accent-green)');
+        } else {
+          showSyncStatus('Connected — no data found','var(--gold)');
         }
         seedTasksIfEmpty();
-        if(!syncReady){syncReady=true;showSyncStatus('Synced','var(--accent-green)');}
+        if(!syncReady){syncReady=true;}
         renderPage(currentPage);
       },(err)=>{
         showSyncStatus('Offline','var(--fog)');
