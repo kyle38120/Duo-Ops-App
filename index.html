@@ -14,26 +14,28 @@
   --accent-green:#4ade80;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
 }
-body{background:var(--black);color:var(--bone);font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:300;letter-spacing:.03em;min-height:100vh;overscroll-behavior:none}
+body{background:var(--black);color:var(--bone);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:300;letter-spacing:.03em;min-height:100vh;overscroll-behavior:none;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky-Pattern-Square.jpg');background-size:340px;background-repeat:repeat;opacity:.04;pointer-events:none;z-index:0}
+.page{position:relative;z-index:1}
 
 /* NAV */
 #nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);border-top:1px solid rgba(235,32,61,.2);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;color:var(--fog);font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:color .15s}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 4px 12px;background:none;border:none;color:var(--fog);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:color .15s}
 .nav-btn.active{color:var(--rust)}
-.nav-btn svg{width:20px;height:20px;stroke-width:1.8}
+.nav-btn svg{width:26px;height:26px;stroke-width:1.8}
 
 /* PAGES */
-.page{display:none;padding:0 0 80px;min-height:100vh}
+.page{display:none;padding:0 0 100px;min-height:100vh}
 .page.active{display:block}
 
 /* HEADER */
 .page-header{padding:48px 20px 14px;position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);z-index:50;border-bottom:1px solid rgba(235,32,61,.15)}
-.page-header h1{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.12em;color:var(--white);line-height:1}
-.page-header p{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-top:2px}
+.page-header h1{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:.12em;color:var(--white);line-height:1}
+.page-header p{font-size:13px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-top:2px}
 
 /* SECTION LABELS */
 .section{padding:16px 20px 0}
-.section-label{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--fog);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--fog);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* CARDS */
@@ -41,14 +43,14 @@ body{background:var(--black);color:var(--bone);font-family:'Barlow Condensed',sa
 .card-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 
 /* BADGES */
-.badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.badge{display:inline-block;padding:3px 9px;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
 .badge-rust{background:rgba(235,32,61,.15);color:var(--rust);border:1px solid rgba(235,32,61,.25)}
 .badge-gold{background:rgba(228,140,34,.15);color:var(--gold);border:1px solid rgba(228,140,34,.25)}
 .badge-bone{background:rgba(200,191,176,.1);color:var(--bone);border:1px solid rgba(200,191,176,.2)}
 .badge-fog{background:rgba(154,144,136,.1);color:var(--fog);border:1px solid rgba(154,144,136,.2)}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:2px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border:none;transition:all .15s}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:12px 20px;border-radius:2px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border:none;transition:all .15s}
 .btn-primary{background:var(--rust);color:var(--white)}
 .btn-primary:active{background:var(--ember)}
 .btn-ghost{background:transparent;color:var(--bone);border:1px solid var(--border2)}
@@ -57,13 +59,13 @@ body{background:var(--black);color:var(--bone);font-family:'Barlow Condensed',sa
 .btn-full{width:100%;justify-content:center}
 
 /* INPUTS */
-input,select,textarea{width:100%;background:var(--charcoal);border:1px solid var(--border2);border-radius:2px;padding:11px 14px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:400;letter-spacing:.03em;color:var(--white);outline:none;transition:border .15s}
+input,select,textarea{width:100%;background:var(--charcoal);border:1px solid var(--border2);border-radius:2px;padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:400;letter-spacing:.03em;color:var(--white);outline:none;transition:border .15s}
 input:focus,select:focus,textarea:focus{border-color:var(--rust)}
 input::placeholder{color:var(--fog)}
 select option{background:var(--charcoal);color:var(--bone)}
 textarea{resize:vertical;min-height:80px}
-label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-bottom:5px}
-.form-group{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-bottom:5px}
+.form-group{margin-bottom:16px}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end}
@@ -73,23 +75,23 @@ label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-tra
 .modal h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.1em;color:var(--white);margin-bottom:20px}
 
 /* CHECKLIST */
-.check-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.check-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
 .check-item:last-child{border-bottom:none}
-.check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--rust);flex-shrink:0}
-.check-item label{margin:0;font-size:15px;font-weight:400;letter-spacing:.04em;color:var(--bone);cursor:pointer}
+.check-item input[type=checkbox]{width:20px;height:20px;accent-color:var(--rust);flex-shrink:0}
+.check-item label{margin:0;font-size:16px;font-weight:400;letter-spacing:.04em;color:var(--bone);cursor:pointer}
 .check-item.checked label{color:var(--fog);text-decoration:line-through}
-.check-section-title{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--rust);padding:16px 0 6px}
+.check-section-title{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--rust);padding:16px 0 6px}
 
 /* METRIC CARDS */
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .metric{background:var(--charcoal);border:1px solid var(--border);border-radius:4px;padding:14px}
-.metric-val{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.05em;margin-bottom:2px;line-height:1}
-.metric-label{font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--fog)}
+.metric-val{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.05em;margin-bottom:2px;line-height:1}
+.metric-label{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--fog)}
 
 /* TABS */
 .tabs{display:flex;gap:0;padding:0 20px 14px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
 .tabs::-webkit-scrollbar{display:none}
-.tab{padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;background:none;color:var(--fog);white-space:nowrap;transition:all .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab{padding:10px 16px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;background:none;color:var(--fog);white-space:nowrap;transition:all .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
 .tab.active{color:var(--rust);border-bottom-color:var(--rust)}
 
 /* PROGRESS */
@@ -97,17 +99,17 @@ label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-tra
 .progress-fill{height:100%;background:var(--rust);transition:width .3s}
 
 /* SHOW CARD */
-.show-card{background:var(--deep);border:1px solid var(--border);border-left:3px solid var(--rust);border-radius:0 4px 4px 0;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.show-card{background:var(--deep);border:1px solid var(--border);border-left:3px solid var(--rust);border-radius:0 4px 4px 0;padding:16px;margin-bottom:10px;cursor:pointer;transition:border-color .15s,background .15s}
 .show-card:active{background:var(--charcoal)}
-.show-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.08em;color:var(--white);margin-bottom:2px}
-.show-meta{font-size:12px;font-weight:400;letter-spacing:.06em;color:var(--fog)}
+.show-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;color:var(--white);margin-bottom:2px}
+.show-meta{font-size:14px;font-weight:400;letter-spacing:.06em;color:var(--fog)}
 
 /* INCOME */
-.income-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.income-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer}
 .income-row:last-child{border-bottom:none}
-.income-name{font-size:14px;font-weight:400;letter-spacing:.04em;color:var(--bone)}
-.income-source{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px}
-.income-amount{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:var(--gold)}
+.income-name{font-size:15px;font-weight:400;letter-spacing:.04em;color:var(--bone)}
+.income-source{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px}
+.income-amount{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.05em;color:var(--gold)}
 
 /* EMPTY STATE */
 .empty{text-align:center;padding:52px 20px;color:var(--fog)}
@@ -145,8 +147,10 @@ label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-tra
 <div id="page-dash" class="page active">
   <div class="page-header">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0">
         <h1>Duo Ops</h1>
+      </div>
         <p id="dash-date"></p>
       </div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.15em;color:var(--rust);border:1px solid rgba(235,32,61,.3);padding:4px 10px;border-radius:2px">Live</div>
@@ -201,7 +205,7 @@ label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- SHOWS -->
 <div id="page-shows" class="page">
-  <div class="page-header"><h1>Shows</h1><p>Performance tracker</p></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Shows</h1><p>Performance tracker</p></div></div></div>
   <div class="tabs" id="shows-tabs">
     <button class="tab active" onclick="filterShows('upcoming',this)">Upcoming</button>
     <button class="tab" onclick="filterShows('past',this)">Past</button>
@@ -212,7 +216,7 @@ label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- TASKS -->
 <div id="page-tasks" class="page">
-  <div class="page-header"><h1>Tasks</h1><p>Execution engine</p></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Tasks</h1><p>Execution engine</p></div></div></div>
   <div class="tabs" id="tasks-tabs">
     <button class="tab active" onclick="filterTasks('all',this)">All</button>
     <button class="tab" onclick="filterTasks('Show Prep',this)">Show Prep</button>
@@ -225,7 +229,7 @@ label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- INCOME -->
 <div id="page-income" class="page">
-  <div class="page-header"><h1>Income</h1><p>Business intelligence</p></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Income</h1><p>Business intelligence</p></div></div></div>
   <div class="tabs" id="income-tabs">
     <button class="tab active" onclick="filterIncome('month',this)">This Month</button>
     <button class="tab" onclick="filterIncome('stream',this)">By Stream</button>
@@ -248,7 +252,7 @@ label{display:block;font-size:10px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- CHECKLIST -->
 <div id="page-check" class="page">
-  <div class="page-header"><h1>Checklist</h1><p>Show day gear</p></div>
+  <div class="page-header"><div style="display:flex;align-items:center;gap:10px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Checklist</h1><p>Show day gear</p></div></div></div>
   <div class="tabs">
     <button class="tab active" onclick="showChecklist('pre',this)">Pre-Show</button>
     <button class="tab" onclick="showChecklist('post',this)">Post-Show</button>
