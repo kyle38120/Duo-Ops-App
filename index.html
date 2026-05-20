@@ -182,11 +182,8 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
         <div class="metric-label">This year</div>
       </div>
       <div class="metric">
-        <div style="display:flex;align-items:baseline;gap:4px">
-          <div class="metric-val" id="dash-vs-last" style="color:var(--bone);font-size:22px">—</div>
-          <div id="dash-vs-arrow" style="font-size:16px"></div>
-        </div>
-        <div class="metric-label">vs last month</div>
+        <div class="metric-val" id="dash-duo-month" style="color:var(--bone);font-size:22px">$0</div>
+        <div class="metric-label">Duo total — month</div>
       </div>
       <div class="metric">
         <div class="metric-val" id="dash-shows-year" style="color:var(--gold)">0</div>
@@ -298,7 +295,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 
 <!-- CHECKLIST -->
 <div id="page-check" class="page">
-  <div class="page-header"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Checklist</h1><p>Show day gear</p></div></div></div>
+  <div class="page-header"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Checklist</h1><p>Show day gear</p></div></div><button class="btn btn-ghost" style="font-size:11px;padding:8px 12px" onclick="openModal('modal-gear-edit')">Edit Gear</button></div></div>
   <div class="tabs">
     <button class="tab active" onclick="showChecklist('pre',this)">Pre-Show</button>
     <button class="tab" onclick="showChecklist('post',this)">Post-Show</button>
@@ -410,6 +407,11 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 </div>
 </div>
 
+<!-- MODAL: INCOME DETAIL -->
+<div class="modal-overlay" id="modal-income-detail" onclick="closeOnOverlay(event,'modal-income-detail')">
+<div class="modal" id="modal-income-detail-content"></div>
+</div>
+
 <!-- MODAL: SHOW DETAIL -->
 <div class="modal-overlay" id="modal-show-detail" onclick="closeOnOverlay(event,'modal-show-detail')">
 <div class="modal" id="modal-show-detail-content"></div>
@@ -421,6 +423,25 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 </div>
 
 
+
+<!-- MODAL: GEAR EDIT -->
+<div class="modal-overlay" id="modal-gear-edit" onclick="closeOnOverlay(event,'modal-gear-edit')">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <h2>Edit Gear List</h2>
+  <div class="tabs" style="padding:0 0 14px;border-bottom:1px solid var(--border);margin-bottom:16px">
+    <button class="tab active" id="gear-tab-pre" onclick="switchGearTab('pre',this)">Pre-Show</button>
+    <button class="tab" id="gear-tab-post" onclick="switchGearTab('post',this)">Post-Show</button>
+  </div>
+  <div id="gear-edit-list"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <input id="gear-new-item" placeholder="New item..." style="flex:1" onkeydown="if(event.key==='Enter')addGearItem()">
+    <button class="btn btn-ghost" onclick="openAddGearSection()" style="padding:10px 12px;font-size:11px">+ Section</button>
+    <button class="btn btn-primary" onclick="addGearItem()" style="padding:10px 14px">Add</button>
+  </div>
+  <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="closeModal('modal-gear-edit')">Done</button>
+</div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -441,22 +462,86 @@ const DB_REF=db.ref('duoops');
 let syncReady=false;
 let saveTimeout=null;
 
-let state={shows:[],tasks:[],income:[],checklist:{pre:{},post:{}},release:{},dumps:[],status:{}};
+let state={shows:[],tasks:[],income:[],checklist:{pre:{},post:{}},release:{},dumps:[],status:{},gear:{pre:null,post:null}};
 
-const PRE_CHECKLIST=[
+const DEFAULT_PRE=[
   {section:'PA / Audio System',items:['Exoton Speaker','Exoton Sub','Audio interface','Instrument cables','Speaker cable']},
   {section:'Instruments & Playing Gear',items:['Guitar','Guitar strap','Guitar stand','Guitar case','Capo','Tuner','Midi Pedal','Midi Pedal USB']},
   {section:'Microphones & Stands',items:['Mic x2','Mic stand','Mic cables x3']},
   {section:'Tech & Power',items:['iPad','iPad stand','USB-C hub','USB-C extension','Audio interface USB','Robot charger','Charger cable','Power cord']},
   {section:'Misc / Setup Essentials',items:['Water','Tip sign','Stuffies','Blanket']}
 ];
-const POST_CHECKLIST=[
+const DEFAULT_POST=[
   {section:'Gear & Instruments',items:['Guitar back in case','Capo + tuner packed','Guitar stand packed','Pedal + MIDI gear packed']},
   {section:'Audio & Tech',items:["Mic(s) packed","Mic stand collapsed + packed","All cables accounted for","Audio interface packed","iPad + stand packed","USB-C hub + extensions packed"]},
   {section:'PA System',items:['Speaker powered down','Sub powered down','All power cables unplugged + packed','Speaker cables accounted for']},
   {section:'Misc',items:['Water bottle','Tip sign','Stuffies','Trash cleared from area']},
   {section:'Final Sweep',items:['Stage area visually checked','Floor checked for cables/adapters','Double-check venue power outlets','Confirm all bags loaded']}
 ];
+function getGear(mode){return(state.gear&&state.gear[mode])||( mode==='pre'?DEFAULT_PRE:DEFAULT_POST);}
+function saveGear(){save();renderChecklist();renderGearEditList();}
+
+// GEAR EDIT
+let currentGearTab='pre';
+function switchGearTab(mode,btn){
+  currentGearTab=mode;
+  document.querySelectorAll('#modal-gear-edit .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderGearEditList();
+}
+
+function renderGearEditList(){
+  const list=document.getElementById('gear-edit-list');if(!list)return;
+  const gear=getGear(currentGearTab);
+  list.innerHTML=gear.map((sec,si)=>`
+    <div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--rust)">${sec.section}</span>
+        <button onclick="deleteGearSection(${si})" style="background:none;border:none;color:var(--fog);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">×</button>
+      </div>
+      ${sec.items.map((item,ii)=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="flex:1;font-size:14px;color:var(--bone)">${item}</span>
+          <button onclick="deleteGearItem(${si},${ii})" style="background:none;border:none;color:var(--fog);font-size:16px;cursor:pointer;padding:0 6px;line-height:1">×</button>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function addGearItem(){
+  const input=document.getElementById('gear-new-item');
+  const text=input.value.trim();if(!text)return;
+  if(!state.gear)state.gear={pre:null,post:null};
+  if(!state.gear[currentGearTab])state.gear[currentGearTab]=JSON.parse(JSON.stringify(currentGearTab==='pre'?DEFAULT_PRE:DEFAULT_POST));
+  const gear=state.gear[currentGearTab];
+  // Add to last section
+  gear[gear.length-1].items.push(text);
+  input.value='';
+  saveGear();
+}
+
+function deleteGearItem(si,ii){
+  if(!state.gear)state.gear={pre:null,post:null};
+  if(!state.gear[currentGearTab])state.gear[currentGearTab]=JSON.parse(JSON.stringify(currentGearTab==='pre'?DEFAULT_PRE:DEFAULT_POST));
+  state.gear[currentGearTab][si].items.splice(ii,1);
+  saveGear();
+}
+
+function deleteGearSection(si){
+  if(!confirm('Delete this section?'))return;
+  if(!state.gear)state.gear={pre:null,post:null};
+  if(!state.gear[currentGearTab])state.gear[currentGearTab]=JSON.parse(JSON.stringify(currentGearTab==='pre'?DEFAULT_PRE:DEFAULT_POST));
+  state.gear[currentGearTab].splice(si,1);
+  saveGear();
+}
+
+function openAddGearSection(){
+  const name=prompt('Section name:');
+  if(!name||!name.trim())return;
+  if(!state.gear)state.gear={pre:null,post:null};
+  if(!state.gear[currentGearTab])state.gear[currentGearTab]=JSON.parse(JSON.stringify(currentGearTab==='pre'?DEFAULT_PRE:DEFAULT_POST));
+  state.gear[currentGearTab].push({section:name.trim(),items:[]});
+  saveGear();
+}
 // SAVE / LOAD
 
 function showSyncStatus(msg,color){
@@ -486,7 +571,7 @@ function save(){
 function load(){
   try{
     const d=localStorage.getItem('duoops2');
-    if(d){const p=JSON.parse(d);state=Object.assign({shows:[],tasks:[],income:[],checklist:{pre:{},post:{}},release:{},dumps:[],status:{}},p);if(!state.checklist)state.checklist={pre:{},post:{}};if(!state.status)state.status={};if(!state.dumps)state.dumps=[];}
+    if(d){const p=JSON.parse(d);state=Object.assign({shows:[],tasks:[],income:[],checklist:{pre:{},post:{}},release:{},dumps:[],status:{},gear:{pre:null,post:null}},p);if(!state.checklist)state.checklist={pre:{},post:{}};if(!state.status)state.status={};if(!state.dumps)state.dumps=[];if(!state.gear)state.gear={pre:null,post:null};}
   }catch(e){}
 }
 
@@ -505,14 +590,14 @@ function initFirebase(){
       DB_REF.on('value',(snap)=>{
         const data=snap.val();
         if(data){
-          state=Object.assign({shows:[],tasks:[],income:[],checklist:{pre:{},post:{}},release:{},dumps:[],status:{}},data);
-          // Normalize — Firebase may return objects instead of arrays
+          state=Object.assign({shows:[],tasks:[],income:[],checklist:{pre:{},post:{}},release:{},dumps:[],status:{},gear:{pre:null,post:null}},data);
           state.tasks=normalizeArr(state.tasks);
           state.income=normalizeArr(state.income);
           state.shows=normalizeArr(state.shows);
           state.dumps=normalizeArr(state.dumps);
           if(!state.checklist)state.checklist={pre:{},post:{}};
           if(!state.status)state.status={};
+          if(!state.gear)state.gear={pre:null,post:null};
           try{localStorage.setItem('duoops2',JSON.stringify(state));}catch(e){}
           // Diagnostic — shows in sync status
           showSyncStatus(`Synced · ${state.tasks.length} tasks · ${state.income.length} income`,'var(--accent-green)');
@@ -548,6 +633,7 @@ function handleFab(){if(currentPage==='tasks')openModal('modal-task');else if(cu
 
 function openModal(id){
   document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';
+  if(id==='modal-gear-edit'){currentGearTab='pre';document.getElementById('gear-tab-pre').classList.add('active');document.getElementById('gear-tab-post').classList.remove('active');renderGearEditList();}
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
 function closeOnOverlay(e,id){if(e.target===document.getElementById(id))closeModal(id);}
@@ -573,36 +659,27 @@ function renderDash(){
   }
   // INCOME METRICS
   const thisYear=today().substring(0,4);
-  const prevMonth=new Date(new Date().getFullYear(),new Date().getMonth()-1,1).toISOString().substring(0,7);
   const mInc=state.income.filter(i=>fmtMonth(i.date)===thisMonth());
   const yInc=state.income.filter(i=>i.date&&i.date.startsWith(thisYear));
-  const pInc=state.income.filter(i=>fmtMonth(i.date)===prevMonth);
   const herEarned=arr=>arr.reduce((a,b)=>a+(parseFloat(b.amount)||0)+(parseFloat(b.tips)||0),0);
   const mTotal=herEarned(mInc);
   const yTotal=herEarned(yInc);
-  const pTotal=herEarned(pInc);
   // Best month ever
   const byMonth={};state.income.forEach(i=>{const m=fmtMonth(i.date);byMonth[m]=(byMonth[m]||0)+(parseFloat(i.amount)||0)+(parseFloat(i.tips)||0);});
   const bestAmt=Object.values(byMonth).length?Math.max(...Object.values(byMonth)):0;
+  // Duo total this month
+  const duoMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
+    const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
+    return a+(gig||chk*2)+tips;
+  },0);
   document.getElementById('dash-month-total').textContent='$'+mTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('dash-year-total').textContent='$'+yTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   const bestEl=document.getElementById('dash-best-month');
   if(bestEl)bestEl.textContent='$'+bestAmt.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   const monthLabel=document.getElementById('dash-month-label');
   if(monthLabel)monthLabel.textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
-  // vs last month
-  const vsEl=document.getElementById('dash-vs-last');
-  const arrowEl=document.getElementById('dash-vs-arrow');
-  if(vsEl&&arrowEl){
-    if(pTotal>0){
-      const pct=Math.round(((mTotal-pTotal)/pTotal)*100);
-      const up=pct>=0;
-      vsEl.textContent=(up?'+':'')+pct+'%';
-      vsEl.style.color=up?'var(--gold)':'var(--rust)';
-      arrowEl.textContent=up?'↑':'↓';
-      arrowEl.style.color=up?'var(--gold)':'var(--rust)';
-    } else {vsEl.textContent='—';arrowEl.textContent='';}
-  }
+  const duoEl=document.getElementById('dash-duo-month');
+  if(duoEl)duoEl.textContent='$'+duoMonth.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   // SHOWS THIS YEAR + THIS MONTH
   const allS=allShows();
   const showsYear=allS.filter(s=>s.date&&s.date.startsWith(thisYear)&&s.date<=today()).length;
@@ -926,7 +1003,7 @@ const incRow=i=>{
   const tips=parseFloat(i.tips)||0;
   const total=parseFloat(i.total)||0;
   const earned=check+tips;
-  return`<div class="income-row" onclick="deleteIncome('${i.id}')">
+  return`<div class="income-row" onclick="openIncomeDetail('${i.id}')">
     <div style="flex:1;min-width:0">
       <div class="income-name">${i.name}</div>
       <div class="income-source">${i.source} · ${fmtDate(i.date)}</div>
@@ -942,6 +1019,47 @@ const incRow=i=>{
     </div>
   </div>`;
 };
+
+function openIncomeDetail(id){
+  const i=state.income.find(x=>x.id===id);if(!i)return;
+  const check=parseFloat(i.amount)||0;
+  const tips=parseFloat(i.tips)||0;
+  const total=parseFloat(i.total)||0;
+  const earned=check+tips;
+  document.getElementById('modal-income-detail-content').innerHTML=`
+    <div class="modal-handle"></div>
+    <h2 style="margin-bottom:4px">${i.name}</h2>
+    <p style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:16px">${i.source} · ${fmtDate(i.date)}</p>
+    <div class="metrics" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      ${check?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(check)}</div><div class="metric-label">Check</div></div>`:''}
+      ${tips?`<div class="metric"><div class="metric-val" style="color:var(--gold);font-size:22px">${fmtAmt(tips)}</div><div class="metric-label">Tips</div></div>`:''}
+      <div class="metric" style="${check&&tips?'grid-column:1/-1':''}"><div class="metric-val" style="color:var(--bone);font-size:22px">${fmtAmt(earned)}</div><div class="metric-label">Her total</div></div>
+      ${total?`<div class="metric"><div class="metric-val" style="color:var(--fog);font-size:22px">${fmtAmt(total)}</div><div class="metric-label">Gig total</div></div>`:''}
+    </div>
+    ${i.notes?`<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--fog);font-weight:400">${i.notes}</p></div>`:''}
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="editIncome('${i.id}')">Edit</button>
+      <button class="btn btn-danger" style="flex:1" onclick="deleteIncome('${i.id}');closeModal('modal-income-detail')">Delete</button>
+    </div>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal('modal-income-detail')">Close</button>
+  `;
+  openModal('modal-income-detail');
+}
+
+function editIncome(id){
+  const i=state.income.find(x=>x.id===id);if(!i)return;
+  closeModal('modal-income-detail');
+  document.getElementById('inc-edit-id').value=i.id;
+  document.getElementById('i-name').value=i.name||'';
+  document.getElementById('i-amount').value=i.amount||'';
+  document.getElementById('i-tips').value=i.tips||'';
+  document.getElementById('i-total').value=i.total||'';
+  document.getElementById('i-source').value=i.source||'Duo Show';
+  document.getElementById('i-date').value=i.date||'';
+  document.getElementById('i-notes').value=i.notes||'';
+  document.getElementById('income-modal-title').textContent='Edit Entry';
+  openModal('modal-income');
+}
 
 function renderIncome(){
   const earnedAmt=i=>(parseFloat(i.amount)||0)+(parseFloat(i.tips)||0);
@@ -1088,7 +1206,7 @@ function saveIncome(){
   };
   if(!entry.name||!entry.date)return alert('Description and date required');
   if(id){const i=state.income.findIndex(x=>x.id===id);state.income[i]=entry;}else state.income.push(entry);
-  save();closeModal('modal-income');clearIncomeForm();renderIncome();renderDash();
+  save();closeModal('modal-income');document.getElementById('income-modal-title').textContent='Log Income';clearIncomeForm();renderIncome();renderDash();
 }
 function deleteIncome(id){if(confirm('Delete this entry?')){state.income=state.income.filter(i=>i.id!==id);save();renderIncome();renderDash();}}
 function clearIncomeForm(){
@@ -1100,7 +1218,7 @@ function clearIncomeForm(){
 // CHECKLIST
 function renderChecklist(){
   const list=document.getElementById('checklist-content');
-  const data=currentCheckMode==='pre'?PRE_CHECKLIST:POST_CHECKLIST;
+  const data=getGear(currentCheckMode);
   const checks=state.checklist[currentCheckMode]||{};
   let total=0,checked=0;
   list.innerHTML=data.map(section=>`<div class="check-section-title">${section.section}</div>${section.items.map(item=>{total++;const k=item.toLowerCase().replace(/[^a-z0-9]/g,'_');const on=checks[k];if(on)checked++;return`<div class="check-item ${on?'checked':''}"><input type="checkbox" id="chk-${k}" ${on?'checked':''} onchange="toggleCheck('${k}',this.checked)"><label for="chk-${k}">${item}</label></div>`;}).join('')}`).join('');
