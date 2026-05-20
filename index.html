@@ -191,7 +191,8 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
       </div>
       <div class="metric">
         <div class="metric-val" id="dash-best-month" style="color:var(--bone);font-size:22px">$0</div>
-        <div class="metric-label">Best month ever</div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="dash-best-month-label"></div>
+        <div class="metric-label" style="margin-top:2px">Best month ever</div>
       </div>
     </div>
   </div>
@@ -268,7 +269,8 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
       </div>
       <div class="metric">
         <div class="metric-val" id="inc-best" style="color:var(--bone);font-size:22px">$0</div>
-        <div class="metric-label">Best month</div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px" id="inc-best-label"></div>
+        <div class="metric-label" style="margin-top:2px">Best month</div>
       </div>
       <div class="metric">
         <div class="metric-val" id="inc-duo-month" style="color:var(--bone);font-size:22px">$0</div>
@@ -666,7 +668,9 @@ function renderDash(){
   const yTotal=herEarned(yInc);
   // Best month ever
   const byMonth={};state.income.forEach(i=>{const m=fmtMonth(i.date);byMonth[m]=(byMonth[m]||0)+(parseFloat(i.amount)||0)+(parseFloat(i.tips)||0);});
-  const bestAmt=Object.values(byMonth).length?Math.max(...Object.values(byMonth)):0;
+  const bestEntry=Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
+  const bestAmt=bestEntry?bestEntry[1]:0;
+  const bestMonthLabel=bestEntry?new Date(bestEntry[0]+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
   // Duo total this month
   const duoMonth=mInc.filter(i=>i.source==='Duo Show'||i.source==='Private Event').reduce((a,b)=>{
     const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
@@ -675,7 +679,9 @@ function renderDash(){
   document.getElementById('dash-month-total').textContent='$'+mTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('dash-year-total').textContent='$'+yTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
   const bestEl=document.getElementById('dash-best-month');
+  const bestLabelEl=document.getElementById('dash-best-month-label');
   if(bestEl)bestEl.textContent='$'+bestAmt.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  if(bestLabelEl)bestLabelEl.textContent=bestMonthLabel;
   const monthLabel=document.getElementById('dash-month-label');
   if(monthLabel)monthLabel.textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
   const duoEl=document.getElementById('dash-duo-month');
@@ -687,7 +693,7 @@ function renderDash(){
   const showsEl=document.getElementById('dash-shows-year');
   const showsLabel=document.getElementById('dash-shows-label');
   if(showsEl)showsEl.textContent=showsYear;
-  if(showsLabel)showsLabel.textContent=`Shows this year · ${showsMonth} this month`;
+  if(showsLabel)showsLabel.innerHTML=`Shows this year<br><span style="color:var(--gold)">${showsMonth} this month</span>`;
   renderFocus();renderReleaseDash();renderDumpList();
 }
 
@@ -1095,7 +1101,9 @@ function renderIncome(){
   const allTotal=allInc.reduce((a,b)=>a+earnedAmt(b),0);
   // Best month
   const byMonth={};allInc.forEach(i=>{const m=fmtMonth(i.date);byMonth[m]=(byMonth[m]||0)+earnedAmt(i);});
-  const bestAmt=Object.values(byMonth).length?Math.max(...Object.values(byMonth)):0;
+  const bestEntry=Object.entries(byMonth).sort((a,b)=>b[1]-a[1])[0];
+  const bestAmt=bestEntry?bestEntry[1]:0;
+  const bestMonthLabel=bestEntry?new Date(bestEntry[0]+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
   // Duo total this month
   const duoMonth=mInc.filter(i=>i.source==='Duo Show').reduce((a,b)=>{
     const gig=parseFloat(b.total)||0;const chk=parseFloat(b.amount)||0;const tips=parseFloat(b.tips)||0;
@@ -1111,6 +1119,7 @@ function renderIncome(){
   document.getElementById('inc-total').textContent=fmtAmt(mTotal);
   document.getElementById('inc-alltime').textContent=fmtAmt(allTotal);
   const bestEl=document.getElementById('inc-best');if(bestEl)bestEl.textContent=fmtAmt(bestAmt);
+  const bestLabelEl=document.getElementById('inc-best-label');if(bestLabelEl)bestLabelEl.textContent=bestMonthLabel;
   const duoEl=document.getElementById('inc-duo-month');if(duoEl)duoEl.textContent=fmtAmt(duoMonth);
   const ttPctEl=document.getElementById('inc-tt-pct');if(ttPctEl)ttPctEl.textContent=ttPct+'%';
   const showPctEl=document.getElementById('inc-show-pct');if(showPctEl)showPctEl.textContent=showPct+'%';
