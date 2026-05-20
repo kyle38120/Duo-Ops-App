@@ -1205,6 +1205,12 @@ function jumpToBestMonth(){
 }
 let duoExpanded=false;
 let duoPeriod='month';
+let streamPeriod='all';
+
+function setStreamPeriod(p){
+  streamPeriod=p;
+  renderIncome();
+}
 
 function toggleDuoExpand(){
   duoExpanded=!duoExpanded;
@@ -1428,22 +1434,35 @@ function renderIncome(){
     }).join('');
 
   } else if(currentIncFilter==='stream'){
-    // Collapsed by default — tap to expand
-    const streams={};allInc.forEach(i=>{if(!streams[i.source])streams[i.source]=[];streams[i.source].push(i);});
-    list.innerHTML=Object.entries(streams).sort((a,b)=>b[1].reduce((x,y)=>x+earnedAmt(y),0)-a[1].reduce((x,y)=>x+earnedAmt(y),0)).map(([src,items])=>{
-      const tot=items.reduce((a,b)=>a+earnedAmt(b),0);
-      const sid='stream-'+src.replace(/[^a-z0-9]/gi,'_');
-      return`<div class="stream-group">
-        <div class="stream-group-header" style="cursor:pointer" onclick="toggleGroup('${sid}')">
-          <span class="stream-group-name">${src}</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span class="stream-group-total">${fmtAmt(tot)}</span>
-            <span id="${sid}-arrow" style="font-size:12px;color:var(--fog)">▼</span>
+    const thisYear=today().substring(0,4);
+    const prevMonth=new Date(new Date().getFullYear(),new Date().getMonth()-1,1).toISOString().substring(0,7);
+    let streamInc=allInc;
+    if(streamPeriod==='month')streamInc=allInc.filter(i=>fmtMonth(i.date)===thisMonth());
+    else if(streamPeriod==='year')streamInc=allInc.filter(i=>i.date&&i.date.startsWith(thisYear));
+    const streams={};streamInc.forEach(i=>{if(!streams[i.source])streams[i.source]=[];streams[i.source].push(i);});
+    const periodTabs=`<div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="tab${streamPeriod==='month'?' active':''}" onclick="setStreamPeriod('month')" style="font-size:10px;padding:6px 12px">Month</button>
+      <button class="tab${streamPeriod==='year'?' active':''}" onclick="setStreamPeriod('year')" style="font-size:10px;padding:6px 12px">Year</button>
+      <button class="tab${streamPeriod==='all'?' active':''}" onclick="setStreamPeriod('all')" style="font-size:10px;padding:6px 12px">All Time</button>
+    </div>`;
+    if(!Object.keys(streams).length){
+      list.innerHTML=periodTabs+`<div class="card"><p style="color:var(--fog);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">No income for this period</p></div>`;
+    } else {
+      list.innerHTML=periodTabs+Object.entries(streams).sort((a,b)=>b[1].reduce((x,y)=>x+earnedAmt(y),0)-a[1].reduce((x,y)=>x+earnedAmt(y),0)).map(([src,items])=>{
+        const tot=items.reduce((a,b)=>a+earnedAmt(b),0);
+        const sid='stream-'+src.replace(/[^a-z0-9]/gi,'_')+'-'+streamPeriod;
+        return`<div class="stream-group">
+          <div class="stream-group-header" style="cursor:pointer" onclick="toggleGroup('${sid}')">
+            <span class="stream-group-name">${src}</span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="stream-group-total">${fmtAmt(tot)}</span>
+              <span id="${sid}-arrow" style="font-size:12px;color:var(--fog)">▼</span>
+            </div>
           </div>
-        </div>
-        <div id="${sid}" style="display:none"><div class="card" style="padding:8px 16px">${items.map(i=>incRow(i)).join('')}</div></div>
-      </div>`;
-    }).join('');
+          <div id="${sid}" style="display:none"><div class="card" style="padding:8px 16px">${items.map(i=>incRow(i)).join('')}</div></div>
+        </div>`;
+      }).join('');
+    }
 
   } else if(currentIncFilter==='venue'){
     // Group by show venue (duo/solo/private only)
