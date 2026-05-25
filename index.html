@@ -1697,30 +1697,44 @@ function wxCondition(shortForecast){
 }
 
 // Geocode venue string to lat/lng.
-// Uses Census Bureau TIGER geocoder for street addresses (free, no key).
-// Falls back to Open-Meteo name search for venue names without street numbers.
+// Census Bureau geocoder doesn't send CORS headers, so we use JSONP (script tag)
+// which bypasses CORS entirely. Open-Meteo (CORS-friendly) is the fallback.
+var _jsonpCounter=0;
+function censusJSONP(addr){
+  return new Promise(function(resolve){
+    var cb='_censusCb'+(_jsonpCounter++);
+    var script=document.createElement('script');
+    var timer=setTimeout(function(){
+      cleanup();resolve(null);
+    },8000);
+    function cleanup(){
+      clearTimeout(timer);
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      if(script.parentNode)script.parentNode.removeChild(script);
+    }
+    window[cb]=function(data){
+      cleanup();
+      try{
+        var m=data&&data.result&&data.result.addressMatches;
+        if(!m||!m.length){resolve(null);return;}
+        resolve({lat:m[0].coordinates.y,lng:m[0].coordinates.x});
+      }catch(e){resolve(null);}
+    };
+    script.onerror=function(){cleanup();resolve(null);};
+    script.src='https://geocoding.geo.census.gov/geocoder/locations/onelineaddress'
+      +'?address='+encodeURIComponent(addr)
+      +'&benchmark=Public_AR_Current&format=jsonp&callback='+cb;
+    document.body.appendChild(script);
+  });
+}
 function geocodeVenue(venue){
   if(!venue)return Promise.resolve(null);
   var cacheKey="geo:"+venue;
   if(WX_CACHE[cacheKey])return Promise.resolve(WX_CACHE[cacheKey]);
-  // Split on newlines to separate venue name from address
   var parts=venue.split("\n").map(function(s){return s.trim();}).filter(Boolean);
-  // Find the part that starts with a digit (street address)
   var streetPart=parts.find(function(p){return /^\d/.test(p);});
-  // Strip "United States" suffix if present
   var address=(streetPart||parts.join(", ")).replace(/,?\s*United States\s*$/i,"").trim();
   var hasStreet=/^\d/.test(address);
-  function censusGeocode(addr){
-    var url="https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
-      +"?address="+encodeURIComponent(addr)
-      +"&benchmark=Public_AR_Current&format=json";
-    return fetch(url).then(function(r){return r.json();})
-      .then(function(data){
-        var m=data.result&&data.result.addressMatches;
-        if(!m||!m.length)return null;
-        return{lat:m[0].coordinates.y,lng:m[0].coordinates.x};
-      }).catch(function(){return null;});
-  }
   function openMeteoGeocode(name){
     var cleaned=name.replace(/\d{5}(-\d{4})?/g,"")
       .replace(/^\d+\s+/,"")
@@ -1735,10 +1749,10 @@ function geocodeVenue(venue){
         return{lat:r.latitude,lng:r.longitude};
       }).catch(function(){return null;});
   }
-  var primary=hasStreet?censusGeocode(address):openMeteoGeocode(address);
+  var primary=hasStreet?censusJSONP(address):openMeteoGeocode(address);
   return primary.then(function(coords){
     if(coords){WX_CACHE[cacheKey]=coords;return coords;}
-    return hasStreet?openMeteoGeocode(address):censusGeocode(address);
+    return hasStreet?openMeteoGeocode(address):censusJSONP(address);
   }).then(function(coords){
     if(coords)WX_CACHE[cacheKey]=coords;
     return coords||null;
