@@ -1710,22 +1710,81 @@ function wxCondition(shortForecast){
   return{icon:'🌡',label:shortForecast||'',color:'var(--fog)'};
 }
 
-// Geocode venue string → {lat,lng} using Google Geocoding API
+// Geocode venue string → {lat,lng}
+// Strategy: try Census Bureau geocoder first (free, no key, great for US addresses).
+// If the venue string looks like a full address (has digits), send it straight to Census.
+// Otherwise — or if Census misses — fall back to Open-Meteo name search (no key either).
 function geocodeVenue(venue){
-  if(!venue){console.warn('Weather: geocodeVenue called with empty venue');return Promise.resolve(null);}
+  if(!venue)return Promise.resolve(null);
   const cacheKey='geo:'+venue;
   if(WX_CACHE[cacheKey])return Promise.resolve(WX_CACHE[cacheKey]);
-  console.log('Weather: geocoding venue →',venue);
-  return fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(venue)}&key=${GOOGLE_GEO_KEY}`)
-    .then(r=>r.json())
-    .then(data=>{
-      console.log('Weather: geocode result →',data.status, data.results&&data.results[0]&&data.results[0].geometry&&data.results[0].geometry.location);
-      const loc=data.results&&data.results[0]&&data.results[0].geometry&&data.results[0].geometry.location;
-      if(!loc){console.warn('Weather: geocode returned no location, status:',data.status);return null;}
-      WX_CACHE[cacheKey]={lat:loc.lat,lng:loc.lng};
-      return WX_CACHE[cacheKey];
+
+  // Try to pull a clean street address out of the venue string.
+  // Calendar location often looks like "Shaka Taco
+2368 Country Club Dr, Hampstead, NC 28443, United States"
+  // Split on newlines and commas, find the line/segment that starts with a number.
+  function extractAddress(str){
+    const lines=str.split(/
+/).map(s=>s.trim()).filter(Boolean);
+    // Prefer a line that starts with digits (street number)
+    const streetLine=lines.find(l=>/^\d/.test(l));
+    if(streetLine){
+      // Drop "United States" suffix if present — Census doesn't need it
+      return streetLine.replace(/,?\s*United States\s*$/i,'').trim();
+    }
+    // No numeric line — return the whole thing cleaned up for name search
+    return lines.join(', ');
+  }
+
+  const address=extractAddress(venue);
+  const hasStreetNumber=/^\d/.test(address);
+
+  function censusGeocode(addr){
+    // Census TIGER geocoder — free, no key, US street addresses
+    const url='https://geocoding.geo.census.gov/geocoder/locations/onelineaddress'
+      +'?address='+encodeURIComponent(addr)
+      +'&benchmark=Public_AR_Current&format=json';
+    return fetch(url)
+      .then(r=>r.json())
+      .then(data=>{
+        const matches=data.result&&data.result.addressMatches;
+        if(!matches||!matches.length)return null;
+        const coords=matches[0].coordinates;
+        return{lat:coords.y,lng:coords.x};
+      });
+  }
+
+  function openMeteoGeocode(name){
+    // Open-Meteo geocoding — name-based, no key, good fallback
+    // Strip street numbers and zip codes, keep venue name + city
+    const cleaned=name.replace(/\d{5}(-\d{4})?/g,'')
+      .replace(/^\d+\s+/,'')
+      .replace(/United States/i,'')
+      .replace(/\s{2,}/g,' ').trim();
+    const url='https://geocoding-api.open-meteo.com/v1/search?name='
+      +encodeURIComponent(cleaned)+'&count=1&language=en&format=json';
+    return fetch(url)
+      .then(r=>r.json())
+      .then(data=>{
+        const r=data.results&&data.results[0];
+        if(!r)return null;
+        return{lat:r.latitude,lng:r.longitude};
+      });
+  }
+
+  // Pipeline: Census first (for addresses), then Open-Meteo name search as fallback
+  const primary = hasStreetNumber ? censusGeocode(address) : openMeteoGeocode(address);
+  return primary
+    .then(coords=>{
+      if(coords){WX_CACHE[cacheKey]=coords;return coords;}
+      // Fallback: try the other method
+      return hasStreetNumber ? openMeteoGeocode(address) : censusGeocode(address);
     })
-    .catch(err=>{console.warn('Weather: geocode fetch failed',err);return null;});
+    .then(coords=>{
+      if(coords)WX_CACHE[cacheKey]=coords;
+      return coords||null;
+    })
+    .catch(()=>null);
 }
 
 // NWS /points → grid URLs
@@ -1790,7 +1849,6 @@ function nwsHourly(hourlyUrl,showDate,showTime){
 function fetchWeatherForShow(show){
   // Prefer location field (set by calendar), fall back to notes/title
   const venue=show.location||show.notes||show.venue||show.title||'';
-  console.log('Weather: fetchWeatherForShow — show.location=',show.location,'show.notes=',show.notes,'using venue=',venue);
   if(!venue)return Promise.resolve(null);
   return geocodeVenue(venue)
     .then(coords=>{
