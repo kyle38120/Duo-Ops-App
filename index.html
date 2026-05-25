@@ -1712,30 +1712,35 @@ function wxCondition(shortForecast){
 
 // Geocode venue string → {lat,lng} using Google Geocoding API
 function geocodeVenue(venue){
-  if(!venue)return Promise.resolve(null);
+  if(!venue){console.warn('Weather: geocodeVenue called with empty venue');return Promise.resolve(null);}
   const cacheKey='geo:'+venue;
   if(WX_CACHE[cacheKey])return Promise.resolve(WX_CACHE[cacheKey]);
+  console.log('Weather: geocoding venue →',venue);
   return fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(venue)}&key=${GOOGLE_GEO_KEY}`)
     .then(r=>r.json())
     .then(data=>{
+      console.log('Weather: geocode result →',data.status, data.results&&data.results[0]&&data.results[0].geometry&&data.results[0].geometry.location);
       const loc=data.results&&data.results[0]&&data.results[0].geometry&&data.results[0].geometry.location;
-      if(!loc)return null;
+      if(!loc){console.warn('Weather: geocode returned no location, status:',data.status);return null;}
       WX_CACHE[cacheKey]={lat:loc.lat,lng:loc.lng};
       return WX_CACHE[cacheKey];
     })
-    .catch(()=>null);
+    .catch(err=>{console.warn('Weather: geocode fetch failed',err);return null;});
 }
 
 // NWS /points → grid URLs
+// NOTE: No custom headers — NWS blocks CORS preflight on User-Agent from browsers
 function nwsPoints(lat,lng){
   const key=`pts:${lat.toFixed(4)},${lng.toFixed(4)}`;
   if(WX_CACHE[key])return Promise.resolve(WX_CACHE[key]);
-  return fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`,
-    {headers:{'User-Agent':'DuoOpsApp/1.0 (jadenmoney.com)'}})
-    .then(r=>{if(!r.ok)throw new Error('NWS points failed');return r.json();})
+  console.log(`Weather: NWS /points → ${lat.toFixed(4)},${lng.toFixed(4)}`);
+  return fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`)
+    .then(r=>{if(!r.ok)throw new Error('NWS points '+r.status);return r.json();})
     .then(data=>{
+      if(!data.properties)throw new Error('No properties in NWS response');
       const props=data.properties;
       const result={hourly:props.forecastHourly,forecast:props.forecast,tz:props.timeZone};
+      if(!result.hourly)throw new Error('No hourly URL from NWS');
       WX_CACHE[key]=result;
       return result;
     });
@@ -1745,20 +1750,36 @@ function nwsPoints(lat,lng){
 function nwsHourly(hourlyUrl,showDate,showTime){
   const key='hrly:'+hourlyUrl+showDate;
   if(WX_CACHE[key])return Promise.resolve(WX_CACHE[key]);
-  return fetch(hourlyUrl,{headers:{'User-Agent':'DuoOpsApp/1.0 (jadenmoney.com)'}})
-    .then(r=>{if(!r.ok)throw new Error('NWS hourly failed');return r.json();})
+  return fetch(hourlyUrl)
+    .then(r=>{if(!r.ok)throw new Error('NWS hourly '+r.status);return r.json();})
     .then(data=>{
       const periods=data.properties.periods||[];
-      // Window: 2h before showtime through 4h after (load-in + show + pack-out)
-      // If no showtime, use noon as anchor
-      const anchor=showTime?showTime:'18:00';
-      const showDT=new Date(showDate+'T'+anchor);
-      const windowStart=new Date(showDT.getTime()-2*60*60*1000);
-      const windowEnd=new Date(showDT.getTime()+5*60*60*1000);
-      const relevant=periods.filter(p=>{
-        const s=new Date(p.startTime);
-        return s>=windowStart&&s<=windowEnd;
-      });
+      if(!periods.length)throw new Error('No periods returned');
+
+      // Match by date string rather than timestamp arithmetic to avoid TZ issues.
+      // showDate = 'YYYY-MM-DD', period.startTime = '2026-06-14T18:00:00-04:00'
+      // Grab all periods whose startTime date portion matches showDate,
+      // plus a window of ±3 periods around the show hour if time is known.
+      const anchor=showTime||'18:00';
+      const showHour=parseInt(anchor.split(':')[0],10);
+
+      // First pass: all periods on the show date
+      const onDay=periods.filter(p=>p.startTime.startsWith(showDate));
+
+      let relevant=onDay;
+      if(onDay.length===0){
+        // Fallback: grab first 8 periods of whatever is available (show might be >7 days)
+        relevant=periods.slice(0,8);
+      } else if(showTime){
+        // Narrow to 2h before → 5h after show hour
+        relevant=onDay.filter(p=>{
+          const pHour=new Date(p.startTime).getHours();
+          return pHour>=(showHour-2)&&pHour<=(showHour+5);
+        });
+        // If filter was too aggressive fall back to all day periods
+        if(relevant.length<2)relevant=onDay;
+      }
+
       const result={periods:relevant,all:periods};
       WX_CACHE[key]=result;
       return result;
@@ -1767,15 +1788,16 @@ function nwsHourly(hourlyUrl,showDate,showTime){
 
 // Full pipeline: venue → geocode → NWS → hourly periods
 function fetchWeatherForShow(show){
+  // Prefer location field (set by calendar), fall back to notes/title
   const venue=show.location||show.notes||show.venue||show.title||'';
+  console.log('Weather: fetchWeatherForShow — show.location=',show.location,'show.notes=',show.notes,'using venue=',venue);
   if(!venue)return Promise.resolve(null);
   return geocodeVenue(venue)
     .then(coords=>{
-      if(!coords)return null;
+      if(!coords)throw new Error('Geocode returned null for: '+venue);
       return nwsPoints(coords.lat,coords.lng);
     })
     .then(grid=>{
-      if(!grid)return null;
       return nwsHourly(grid.hourly,show.date,show.time);
     });
 }
@@ -1789,7 +1811,6 @@ function fetchShowWeatherSnippet(show,elementId){
     .then(data=>{
       if(!el)return;
       if(!data||!data.periods||!data.periods.length){
-        // Try day-level forecast as fallback using show date
         el.innerHTML='';return;
       }
       // Summarise: temp range + dominant condition across the show window
@@ -1814,7 +1835,7 @@ function fetchShowWeatherSnippet(show,elementId){
           ${isRain?`<span style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--rust)">⚠ Plan load-in</span>`:''}
         </div>`;
     })
-    .catch(()=>{if(el)el.innerHTML='';});
+    .catch((err)=>{console.warn('Weather snippet error:',err);if(el)el.innerHTML='';});
 }
 
 // Show detail modal hourly weather block
@@ -1862,7 +1883,8 @@ function fetchShowWeatherDetail(show,elementId){
           <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:8px;opacity:.5">National Weather Service · 2hr before through 5hr after show</div>
         </div>`;
     })
-    .catch(()=>{
+    .catch((err)=>{
+      console.warn('Weather error:',err);
       if(el)el.innerHTML=`
         <div style="padding:12px 0 4px">
           <div class="section-label" style="padding:0 0 10px">Show Day Forecast</div>
