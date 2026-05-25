@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Duo Ops">
@@ -18,7 +18,7 @@
   --accent-green:#4ade80;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
 }
-body{background:var(--black);color:var(--bone);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:300;letter-spacing:.03em;min-height:100vh;overscroll-behavior:none;position:relative}
+html{overscroll-behavior:none}body{background:var(--black);color:var(--bone);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:300;letter-spacing:.03em;min-height:100vh;overscroll-behavior:none;position:relative}
 body::before{content:'';position:fixed;inset:0;background-image:url('https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky-Pattern-Square.jpg');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:.08;pointer-events:none;z-index:0}
 .page{position:relative;z-index:1}
 
@@ -29,11 +29,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url('https://jad
 .nav-btn svg{width:26px;height:26px;stroke-width:1.8}
 
 /* PAGES */
-.page{display:none;padding:0 0 120px;min-height:100vh}
+.page{display:none;padding:0 0 120px;min-height:100vh;touch-action:pan-y}
 .page.active{display:block}
 
 /* HEADER */
-.page-header{padding:48px 20px 14px;position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);z-index:50;border-bottom:1px solid rgba(235,32,61,.15)}
+.page-header{padding:48px 20px 14px;position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);z-index:50;border-bottom:1px solid rgba(235,32,61,.15);touch-action:none;user-select:none}
 .page-header h1{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:.12em;color:var(--white);line-height:1}
 .page-header p{font-size:13px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-top:2px}
 
@@ -2078,6 +2078,9 @@ fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();})
       isHoriz = false;
     }, { passive: true });
 
+    // passive: false is required here so we can call e.preventDefault()
+    // to lock out vertical scroll once horizontal intent is confirmed.
+    // Without this, PWA/standalone mode on iOS scrolls AND swipes simultaneously.
     page.addEventListener('touchmove', e => {
       if (!dragging) return;
       const dx = e.touches[0].clientX - startX;
@@ -2085,14 +2088,16 @@ fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();})
       if (!dirLocked) {
         if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
           dirLocked = true;
-          isHoriz = Math.abs(dx) > Math.abs(dy) * 1.5; // require clear horizontal intent
+          isHoriz = Math.abs(dx) > Math.abs(dy) * 1.5;
         }
-        return; // don't apply drag until direction is known
+        return;
       }
       if (!isHoriz) return;
+      // Confirmed horizontal — block vertical scroll for this gesture
+      e.preventDefault();
       dragX = dx;
       applyDrag(dragX);
-    }, { passive: true });
+    }, { passive: false });
 
     page.addEventListener('touchend', e => {
       if (!dragging) return;
