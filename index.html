@@ -392,7 +392,7 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 <!-- CHECKLIST -->
 <div id="page-check" class="page">
   <div class="page-header"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:12px"><img src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg" style="width:52px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0"><div><h1>Checklist</h1><p>Show day gear</p></div></div><button class="btn btn-ghost" style="font-size:11px;padding:8px 12px" onclick="openModal('modal-gear-edit')">Edit Gear</button></div></div>
-  <div class="tabs">
+  <div class="tabs" id="check-tabs">
     <button class="tab active" onclick="showChecklist('pre',this)">Pre-Show</button>
     <button class="tab" onclick="showChecklist('post',this)">Post-Show</button>
   </div>
@@ -1596,7 +1596,7 @@ function renderChecklist(){
 }
 function toggleCheck(k,v){if(!state.checklist[currentCheckMode])state.checklist[currentCheckMode]={};state.checklist[currentCheckMode][k]=v;save();renderChecklist();}
 function resetChecklist(){if(confirm('Reset checklist?')){state.checklist[currentCheckMode]={};save();renderChecklist();}}
-function showChecklist(mode,btn){currentCheckMode=mode;document.querySelectorAll('#page-check .tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderChecklist();}
+function showChecklist(mode,btn){currentCheckMode=mode;document.querySelectorAll('#check-tabs .tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderChecklist();}
 
 // SEED TASKS — runs once, checks flag so it never overwrites real data
 function seedTasksIfEmpty(){
