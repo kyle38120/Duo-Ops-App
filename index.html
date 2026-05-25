@@ -1663,6 +1663,68 @@ if(checkPinUnlocked()){
 renderDash();
 initFirebase();
 fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
+  fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
+
+// SWIPE NAV
+(function(){
+  const SWIPE_THRESHOLD = 50;
+  const SWIPE_MAX_VERTICAL = 80; // ignore if user is scrolling
+  const tabConfigs = {
+    'page-shows': {
+      tabs: ['upcoming','past','all'],
+      fn: (val, btn) => filterShows(val, btn),
+      tabSelector: '#shows-tabs .tab',
+      get current(){ return currentShowFilter; },
+      set current(v){ currentShowFilter = v; }
+    },
+    'page-tasks': {
+      tabs: ['all','Show Prep','Content','Tech','Release'],
+      fn: (val, btn) => filterTasks(val, btn),
+      tabSelector: '#tasks-tabs .tab',
+      get current(){ return currentTaskFilter; },
+      set current(v){ currentTaskFilter = v; }
+    },
+    'page-income': {
+      tabs: ['month','stream','venue','year'],
+      fn: (val, btn) => filterIncome(val, btn),
+      tabSelector: '#income-tabs .tab',
+      get current(){ return currentIncFilter; },
+      set current(v){ currentIncFilter = v; }
+    },
+    'page-check': {
+      tabs: ['pre','post'],
+      fn: (val, btn) => showChecklist(val, btn),
+      tabSelector: '#page-check .tabs .tab',
+      get current(){ return currentCheckMode; },
+      set current(v){ currentCheckMode = v; }
+    }
+  };
+  Object.entries(tabConfigs).forEach(([pageId, config]) => {
+    const page = document.getElementById(pageId);
+    if (!page) return;
+    let startX = 0, startY = 0;
+    page.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+    page.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = Math.abs(e.changedTouches[0].clientY - startY);
+      if (Math.abs(dx) < SWIPE_THRESHOLD || dy > SWIPE_MAX_VERTICAL) return;
+      const tabs = config.tabs;
+      const idx = tabs.indexOf(config.current);
+      const nextIdx = dx < 0
+        ? Math.min(idx + 1, tabs.length - 1)  // swipe left → next tab
+        : Math.max(idx - 1, 0);               // swipe right → prev tab
+      if (nextIdx === idx) return;
+      const btns = document.querySelectorAll(config.tabSelector);
+      btns.forEach(b => b.classList.remove('active'));
+      if (btns[nextIdx]) btns[nextIdx].classList.add('active');
+      config.current = tabs[nextIdx];
+      config.fn(tabs[nextIdx], btns[nextIdx]);
+    }, { passive: true });
+  });
+})();
 </script>
 </body>
 </html>
