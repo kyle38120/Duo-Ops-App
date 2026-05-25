@@ -933,41 +933,41 @@ function renderDumpList(){
 
 // ICAL FEED
 const ICAL_URL='https://calendar.google.com/calendar/ical/2ecd41cc6548c0bd8e412d13a159cfe950eb93c9dda03a24fb67ac5d02420a8e%40group.calendar.google.com/public/basic.ics';
-const CORS='https://corsproxy.io/?url=';
+const CAL_ID='2ecd41cc6548c0bd8e412d13a159cfe950eb93c9dda03a24fb67ac5d02420a8e@group.calendar.google.com';
+const CAL_API_KEY='AIzaSyAwHXxlKL0kW_soP1whdbbtnkJFFbZPrRk';
 let calShows=[];let calLoaded=false;let calError=false;
 
 function fetchCalendar(){
-  return fetch(CORS+encodeURIComponent(ICAL_URL))
-    .then(r=>{if(!r.ok)throw new Error('fetch failed');return r.text();})
-    .then(ics=>{calShows=parseIcal(ics);calLoaded=true;calError=false;})
+  const now=new Date().toISOString();
+  // Past 1 year to show previous shows too
+  const pastYear=new Date(Date.now()-365*24*60*60*1000).toISOString();
+  const url=`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CAL_ID)}/events`
+    +`?key=${CAL_API_KEY}&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(pastYear)}&maxResults=100`;
+  return fetch(url)
+    .then(r=>{if(!r.ok)throw new Error('API error '+r.status);return r.json();})
+    .then(data=>{
+      calShows=(data.items||[]).filter(e=>e.status!=='cancelled').map(e=>{
+        const startRaw=e.start.dateTime||e.start.date;
+        const d=new Date(startRaw);
+        const date=startRaw.substring(0,10);
+        const time=e.start.dateTime?`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:null;
+        return{
+          id:'cal-'+e.id,
+          title:e.summary||'Show',
+          date,
+          time,
+          location:e.location||'',
+          notes:e.location||'',
+          source:'cal',
+          type:'Duo Show'
+        };
+      });
+      calLoaded=true;calError=false;
+    })
     .catch(()=>{calLoaded=true;calError=true;});
 }
 
-function parseIcal(ics){
-  const events=[];const lines=ics.replace(/\r\n[ \t]/g,'').split(/\r?\n/);
-  let ev=null;
-  for(const raw of lines){
-    const line=raw.trim();
-    if(line==='BEGIN:VEVENT'){ev={};}
-    else if(line==='END:VEVENT'&&ev){
-      if(ev.date&&ev.title){events.push(ev);}ev=null;
-    } else if(ev){
-      if(line.startsWith('SUMMARY:')){ev.title=line.slice(8).replace(/\\,/g,',').replace(/\\n/g,' ').trim();}
-      else if(line.startsWith('DTSTART')){
-        const val=line.split(':')[1];
-        if(val&&val.length>=8){
-          const y=val.slice(0,4),mo=val.slice(4,6),d=val.slice(6,8);
-          ev.date=`${y}-${mo}-${d}`;
-          if(val.length>=15){const h=val.slice(9,11),mi=val.slice(11,13);ev.time=`${h}:${mi}`;}
-        }
-      }
-      else if(line.startsWith('LOCATION:')){ev.location=line.slice(9).replace(/\\,/g,',').replace(/\\n/g,', ').trim();}
-      else if(line.startsWith('DESCRIPTION:')){ev.description=line.slice(12).replace(/\\n/g,' ').replace(/\\,/g,',').trim();}
-      else if(line.startsWith('UID:')){ev.id='cal-'+line.slice(4).trim();}
-    }
-  }
-  return events;
-}
+
 
 function allShows(){
   const calMapped=calShows.map(s=>({...s,source:'cal',type:s.type||'Duo Show',notes:s.location||(s.description||'')}));
