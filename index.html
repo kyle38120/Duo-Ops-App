@@ -1672,20 +1672,6 @@ function updatePinDots(){
   }
 }
 
-// INIT
-load();
-document.getElementById('i-date').value=today();
-document.getElementById('s-date').value=today();
-document.getElementById('fab-btn').style.display='none';
-if(checkPinUnlocked()){
-  document.getElementById('pin-screen').classList.add('hidden');
-}
-renderDash();
-initFirebase();
-fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
-  fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
-
-
 // WEATHER — Weather.gov (NWS), no API key needed, US only
 // Flow: venue string → Google Geocoding → NWS /points → NWS /forecast/hourly
 const WX_CACHE={};
@@ -1950,6 +1936,20 @@ function fetchShowWeatherDetail(show,elementId){
         </div>`;
     });
 }
+
+// INIT
+load();
+document.getElementById('i-date').value=today();
+document.getElementById('s-date').value=today();
+document.getElementById('fab-btn').style.display='none';
+if(checkPinUnlocked()){
+  document.getElementById('pin-screen').classList.add('hidden');
+}
+renderDash();
+initFirebase();
+fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
+  fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
+
 
 // SWIPE NAV
 (function(){
