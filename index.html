@@ -749,7 +749,21 @@ function renderDash(){
   const ns=document.getElementById('dash-next-show');
   if(upcoming.length){
     const s=upcoming[0];const d=daysUntil(s.date);const name=s.title||s.venue;
-    ns.innerHTML=`<div class="next-show-banner" onclick="openShowDetail('${s.id}','${s.source||'manual'}')"><div style="display:flex;align-items:start;justify-content:space-between"><div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;color:var(--white)">${name}</div><div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px">${fmtDate(s.date)}${s.time?' · '+fmtTime(s.time):''}</div>${s.notes?`<div style="font-size:12px;color:var(--fog);margin-top:2px">${s.notes}</div>`:''}</div><div style="text-align:right;flex-shrink:0;padding-top:2px"><div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">${fmtCountdown(d)}</div></div></div></div>`;
+    const wxId='dash-wx-'+s.id.replace(/[^a-z0-9]/gi,'_');
+    ns.innerHTML=`<div class="next-show-banner" onclick="openShowDetail('${s.id}','${s.source||'manual'}')">
+      <div style="display:flex;align-items:start;justify-content:space-between">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;color:var(--white)">${name}</div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:2px">${fmtDate(s.date)}${s.time?' · '+fmtTime(s.time):''}</div>
+          ${s.notes?`<div style="font-size:12px;color:var(--fog);margin-top:2px">${s.notes}</div>`:''}
+          <div id="${wxId}" style="margin-top:8px"></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;padding-left:12px;padding-top:2px">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">${fmtCountdown(d)}</div>
+        </div>
+      </div>
+    </div>`;
+    if(d>=0&&d<=16){fetchShowWeatherSnippet(s,wxId);}
   } else {
     ns.innerHTML=`<div class="card"><p style="color:var(--fog);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase">${calLoaded&&!calError?'No upcoming shows on calendar':'Loading calendar...'}</p></div>`;
   }
@@ -1039,12 +1053,18 @@ function openShowDetail(id,source){
       ${isCal?`<span class="badge badge-gold">From Calendar</span>`:`<span class="badge badge-fog">Manual</span>`}
     </div>
     ${s.notes||s.location?`<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--fog);font-weight:400">${s.notes||s.location}</p></div>`:''}
+    ${!isPast&&daysUntil(s.date)<=16?`<div id="show-detail-wx"></div>`:''}
     ${mapsBtn}
     ${isCal
       ?`<p style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:12px">Managed in Google Calendar</p><button class="btn btn-ghost btn-full" onclick="closeModal('modal-show-detail')">Close</button>`
       :`<div style="display:flex;gap:10px"><button class="btn btn-ghost" style="flex:1" onclick="editShow('${s.id}')">Edit</button><button class="btn btn-danger" style="flex:1" onclick="deleteShow('${s.id}')">Delete</button></div><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal('modal-show-detail')">Close</button>`
     }`;
   openModal('modal-show-detail');
+  // Inject weather for upcoming shows only
+  if(!isPast&&daysUntil(s.date)<=16){
+    const wxEl=document.getElementById('show-detail-wx');
+    if(wxEl)fetchShowWeatherDetail(s,'show-detail-wx');
+  }
 }
 function saveShow(){
   const id=document.getElementById('show-edit-id').value;
@@ -1665,19 +1685,201 @@ initFirebase();
 fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
   fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
 
-// SWIPE NAV — fluid Apple-style with live drag, spring settle, edge resistance
-(function(){
-  const SWIPE_THRESHOLD = 40;
-  const SWIPE_MAX_VERTICAL = 60;
-  const SPRING = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-  const SPRING_DURATION = '340ms';
 
+// WEATHER — Weather.gov (NWS), no API key needed, US only
+// Flow: venue string → Google Geocoding → NWS /points → NWS /forecast/hourly
+const WX_CACHE={};
+const GOOGLE_GEO_KEY='AIzaSyAwHXxlKL0kW_soP1whdbbtnkJFFbZPrRk';
+
+// Weather condition → icon SVG + display label + color hint
+function wxCondition(shortForecast){
+  const f=(shortForecast||'').toLowerCase();
+  if(f.includes('thunder'))           return{icon:'⛈',label:'Storms',   color:'var(--rust)'};
+  if(f.includes('rain')||f.includes('shower')||f.includes('drizzle'))
+                                       return{icon:'🌧',label:'Rain',     color:'#5ba4d4'};
+  if(f.includes('snow')||f.includes('sleet')||f.includes('ice'))
+                                       return{icon:'🌨',label:'Snow/Ice', color:'#a8c8e8'};
+  if(f.includes('fog')||f.includes('haze')||f.includes('mist'))
+                                       return{icon:'🌫',label:'Foggy',    color:'var(--fog)'};
+  if(f.includes('wind'))               return{icon:'💨',label:'Windy',    color:'var(--bone)'};
+  if(f.includes('cloud')||f.includes('overcast'))
+                                       return{icon:'☁️',label:'Cloudy',   color:'var(--bone)'};
+  if(f.includes('partly'))             return{icon:'⛅',label:'Partly Cloudy',color:'var(--bone)'};
+  if(f.includes('sunny')||f.includes('clear'))
+                                       return{icon:'☀️',label:'Clear',    color:'var(--gold)'};
+  return{icon:'🌡',label:shortForecast||'',color:'var(--fog)'};
+}
+
+// Geocode venue string → {lat,lng} using Google Geocoding API
+function geocodeVenue(venue){
+  if(!venue)return Promise.resolve(null);
+  const cacheKey='geo:'+venue;
+  if(WX_CACHE[cacheKey])return Promise.resolve(WX_CACHE[cacheKey]);
+  return fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(venue)}&key=${GOOGLE_GEO_KEY}`)
+    .then(r=>r.json())
+    .then(data=>{
+      const loc=data.results&&data.results[0]&&data.results[0].geometry&&data.results[0].geometry.location;
+      if(!loc)return null;
+      WX_CACHE[cacheKey]={lat:loc.lat,lng:loc.lng};
+      return WX_CACHE[cacheKey];
+    })
+    .catch(()=>null);
+}
+
+// NWS /points → grid URLs
+function nwsPoints(lat,lng){
+  const key=`pts:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  if(WX_CACHE[key])return Promise.resolve(WX_CACHE[key]);
+  return fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`,
+    {headers:{'User-Agent':'DuoOpsApp/1.0 (jadenmoney.com)'}})
+    .then(r=>{if(!r.ok)throw new Error('NWS points failed');return r.json();})
+    .then(data=>{
+      const props=data.properties;
+      const result={hourly:props.forecastHourly,forecast:props.forecast,tz:props.timeZone};
+      WX_CACHE[key]=result;
+      return result;
+    });
+}
+
+// Fetch hourly periods for a show date+time
+function nwsHourly(hourlyUrl,showDate,showTime){
+  const key='hrly:'+hourlyUrl+showDate;
+  if(WX_CACHE[key])return Promise.resolve(WX_CACHE[key]);
+  return fetch(hourlyUrl,{headers:{'User-Agent':'DuoOpsApp/1.0 (jadenmoney.com)'}})
+    .then(r=>{if(!r.ok)throw new Error('NWS hourly failed');return r.json();})
+    .then(data=>{
+      const periods=data.properties.periods||[];
+      // Window: 2h before showtime through 4h after (load-in + show + pack-out)
+      // If no showtime, use noon as anchor
+      const anchor=showTime?showTime:'18:00';
+      const showDT=new Date(showDate+'T'+anchor);
+      const windowStart=new Date(showDT.getTime()-2*60*60*1000);
+      const windowEnd=new Date(showDT.getTime()+5*60*60*1000);
+      const relevant=periods.filter(p=>{
+        const s=new Date(p.startTime);
+        return s>=windowStart&&s<=windowEnd;
+      });
+      const result={periods:relevant,all:periods};
+      WX_CACHE[key]=result;
+      return result;
+    });
+}
+
+// Full pipeline: venue → geocode → NWS → hourly periods
+function fetchWeatherForShow(show){
+  const venue=show.location||show.notes||show.venue||show.title||'';
+  if(!venue)return Promise.resolve(null);
+  return geocodeVenue(venue)
+    .then(coords=>{
+      if(!coords)return null;
+      return nwsPoints(coords.lat,coords.lng);
+    })
+    .then(grid=>{
+      if(!grid)return null;
+      return nwsHourly(grid.hourly,show.date,show.time);
+    });
+}
+
+// Dashboard snippet — compact single-line weather pill on next show banner
+function fetchShowWeatherSnippet(show,elementId){
+  const el=document.getElementById(elementId);
+  if(!el)return;
+  el.innerHTML=`<span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Loading forecast...</span>`;
+  fetchWeatherForShow(show)
+    .then(data=>{
+      if(!el)return;
+      if(!data||!data.periods||!data.periods.length){
+        // Try day-level forecast as fallback using show date
+        el.innerHTML='';return;
+      }
+      // Summarise: temp range + dominant condition across the show window
+      const temps=data.periods.map(p=>p.temperature);
+      const lo=Math.min(...temps),hi=Math.max(...temps);
+      // Pick condition from the show start hour period
+      const anchor=show.time||'18:00';
+      const showDT=new Date(show.date+'T'+anchor);
+      const startPeriod=data.periods.reduce((best,p)=>{
+        const diff=Math.abs(new Date(p.startTime)-showDT);
+        return diff<Math.abs(new Date(best.startTime)-showDT)?p:best;
+      },data.periods[0]);
+      const wx=wxCondition(startPeriod.shortForecast);
+      const windSpeed=startPeriod.windSpeed||'';
+      const isRain=wx.label==='Rain'||wx.label==='Storms';
+      el.innerHTML=`
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:2px">
+          <span style="font-size:16px;line-height:1">${wx.icon}</span>
+          <span style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${wx.color}">${wx.label}</span>
+          <span style="font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--bone)">${lo}–${hi}°F</span>
+          ${windSpeed?`<span style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fog)">${windSpeed}</span>`:''}
+          ${isRain?`<span style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--rust)">⚠ Plan load-in</span>`:''}
+        </div>`;
+    })
+    .catch(()=>{if(el)el.innerHTML='';});
+}
+
+// Show detail modal hourly weather block
+function fetchShowWeatherDetail(show,elementId){
+  const el=document.getElementById(elementId);
+  if(!el)return;
+  el.innerHTML=`
+    <div style="padding:12px 0 4px">
+      <div class="section-label" style="padding:0 0 10px">Show Day Forecast</div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Loading...</div>
+    </div>`;
+  fetchWeatherForShow(show)
+    .then(data=>{
+      if(!el)return;
+      if(!data||!data.periods||!data.periods.length){
+        el.innerHTML=`
+          <div style="padding:12px 0 4px">
+            <div class="section-label" style="padding:0 0 10px">Show Day Forecast</div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">No forecast available — venue location may be missing</div>
+          </div>`;
+        return;
+      }
+      const anchor=show.time||'18:00';
+      const showDT=new Date(show.date+'T'+anchor);
+      el.innerHTML=`
+        <div style="padding:12px 0 4px">
+          <div class="section-label" style="padding:0 0 10px">Show Day Forecast</div>
+          <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+            ${data.periods.map(p=>{
+              const hour=new Date(p.startTime);
+              const isShowHour=Math.abs(hour-showDT)<60*60*1000;
+              const hLabel=hour.toLocaleTimeString('en-US',{hour:'numeric',hour12:true});
+              const wx=wxCondition(p.shortForecast);
+              const rainChance=p.probabilityOfPrecipitation&&p.probabilityOfPrecipitation.value>0
+                ?`<div style="font-size:9px;font-weight:600;letter-spacing:.06em;color:#5ba4d4;margin-top:2px">${p.probabilityOfPrecipitation.value}%💧</div>`:'';
+              return`<div style="flex-shrink:0;text-align:center;padding:8px 10px;background:${isShowHour?'rgba(235,32,61,.12)':'rgba(255,255,255,.04)'};border:1px solid ${isShowHour?'rgba(235,32,61,.3)':'rgba(255,255,255,.06)'};border-radius:2px;min-width:58px">
+                <div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${isShowHour?'var(--rust)':'var(--fog)'};margin-bottom:4px">${isShowHour?'SHOW':hLabel}</div>
+                <div style="font-size:18px;line-height:1;margin-bottom:4px">${wx.icon}</div>
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.06em;color:${wx.color}">${p.temperature}°</div>
+                ${rainChance}
+                <div style="font-size:9px;color:var(--fog);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px">${p.windSpeed}</div>
+              </div>`;
+            }).join('')}
+          </div>
+          <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-top:8px;opacity:.5">National Weather Service · 2hr before through 5hr after show</div>
+        </div>`;
+    })
+    .catch(()=>{
+      if(el)el.innerHTML=`
+        <div style="padding:12px 0 4px">
+          <div class="section-label" style="padding:0 0 10px">Show Day Forecast</div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)">Forecast unavailable</div>
+        </div>`;
+    });
+}
+
+// SWIPE NAV
+(function(){
+  const SWIPE_THRESHOLD = 50;
+  const SWIPE_MAX_VERTICAL = 80; // ignore if user is scrolling
   const tabConfigs = {
     'page-shows': {
       tabs: ['upcoming','past','all'],
       fn: (val, btn) => filterShows(val, btn),
       tabSelector: '#shows-tabs .tab',
-      contentId: 'shows-list',
       get current(){ return currentShowFilter; },
       set current(v){ currentShowFilter = v; }
     },
@@ -1685,7 +1887,6 @@ fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();})
       tabs: ['all','Show Prep','Content','Tech','Release'],
       fn: (val, btn) => filterTasks(val, btn),
       tabSelector: '#tasks-tabs .tab',
-      contentId: 'tasks-list',
       get current(){ return currentTaskFilter; },
       set current(v){ currentTaskFilter = v; }
     },
@@ -1693,139 +1894,40 @@ fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();})
       tabs: ['month','stream','venue','year'],
       fn: (val, btn) => filterIncome(val, btn),
       tabSelector: '#income-tabs .tab',
-      contentId: 'income-list',
       get current(){ return currentIncFilter; },
       set current(v){ currentIncFilter = v; }
     },
     'page-check': {
       tabs: ['pre','post'],
       fn: (val, btn) => showChecklist(val, btn),
-      tabSelector: '#check-tabs .tab',
-      contentId: 'checklist-content',
+      tabSelector: '#page-check .tabs .tab',
       get current(){ return currentCheckMode; },
       set current(v){ currentCheckMode = v; }
     }
   };
-
   Object.entries(tabConfigs).forEach(([pageId, config]) => {
     const page = document.getElementById(pageId);
     if (!page) return;
-
-    let startX = 0, startY = 0, dragX = 0;
-    let dragging = false, dirLocked = false, isHoriz = false;
-    let content = null;
-
-    function getContent() {
-      return document.getElementById(config.contentId);
-    }
-
-    function applyDrag(dx) {
-      const c = getContent();
-      if (!c) return;
-      const tabs = config.tabs;
-      const idx = tabs.indexOf(config.current);
-      const atStart = idx === 0;
-      const atEnd = idx === tabs.length - 1;
-      // Edge resistance: rubber-band when no more tabs in that direction
-      let resist = dx;
-      if ((dx > 0 && atStart) || (dx < 0 && atEnd)) {
-        resist = dx * 0.18;
-      }
-      c.style.transition = 'none';
-      c.style.transform = `translateX(${resist}px)`;
-    }
-
-    function settle(committed, direction) {
-      const c = getContent();
-      if (!c) return;
-      if (committed) {
-        // Slide out to the side, switch tab, slide in from opposite side
-        const outX = direction < 0 ? '-30%' : '30%';
-        const inX  = direction < 0 ?  '30%' : '-30%';
-        c.style.transition = `transform ${SPRING_DURATION} ${SPRING}, opacity 180ms ease`;
-        c.style.transform = `translateX(${outX})`;
-        c.style.opacity = '0';
-        setTimeout(() => {
-          const tabs = config.tabs;
-          const idx = tabs.indexOf(config.current);
-          const nextIdx = direction < 0
-            ? Math.min(idx + 1, tabs.length - 1)
-            : Math.max(idx - 1, 0);
-          const btns = document.querySelectorAll(config.tabSelector);
-          btns.forEach(b => b.classList.remove('active'));
-          if (btns[nextIdx]) btns[nextIdx].classList.add('active');
-          config.current = tabs[nextIdx];
-          config.fn(tabs[nextIdx], btns[nextIdx]);
-          // Content has been re-rendered — grab fresh ref, animate in
-          const nc = getContent();
-          if (nc) {
-            nc.style.transition = 'none';
-            nc.style.transform = `translateX(${inX})`;
-            nc.style.opacity = '0';
-            // Force reflow so the starting position registers
-            nc.getBoundingClientRect();
-            nc.style.transition = `transform ${SPRING_DURATION} ${SPRING}, opacity 200ms ease`;
-            nc.style.transform = 'translateX(0)';
-            nc.style.opacity = '1';
-          }
-        }, 180);
-      } else {
-        // Snap back with spring
-        c.style.transition = `transform ${SPRING_DURATION} ${SPRING}`;
-        c.style.transform = 'translateX(0)';
-      }
-    }
-
+    let startX = 0, startY = 0;
     page.addEventListener('touchstart', e => {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
-      dragX = 0;
-      dragging = true;
-      dirLocked = false;
-      isHoriz = false;
-      const c = getContent();
-      if (c) { c.style.transition = 'none'; }
     }, { passive: true });
-
-    page.addEventListener('touchmove', e => {
-      if (!dragging) return;
-      const dx = e.touches[0].clientX - startX;
-      const dy = e.touches[0].clientY - startY;
-      if (!dirLocked) {
-        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
-          dirLocked = true;
-          isHoriz = Math.abs(dx) > Math.abs(dy);
-        }
-      }
-      if (!isHoriz) return;
-      dragX = dx;
-      applyDrag(dragX);
-    }, { passive: true });
-
     page.addEventListener('touchend', e => {
-      if (!dragging) return;
-      dragging = false;
-      dirLocked = false;
-      if (!isHoriz) return;
+      const dx = e.changedTouches[0].clientX - startX;
       const dy = Math.abs(e.changedTouches[0].clientY - startY);
-      if (dy > SWIPE_MAX_VERTICAL) {
-        settle(false, 0);
-        return;
-      }
+      if (Math.abs(dx) < SWIPE_THRESHOLD || dy > SWIPE_MAX_VERTICAL) return;
       const tabs = config.tabs;
       const idx = tabs.indexOf(config.current);
-      const direction = dragX < 0 ? -1 : 1;
-      const wouldChange = dragX < 0
-        ? idx < tabs.length - 1
-        : idx > 0;
-      const committed = Math.abs(dragX) >= SWIPE_THRESHOLD && wouldChange;
-      settle(committed, direction);
-    }, { passive: true });
-
-    page.addEventListener('touchcancel', () => {
-      if (!dragging) return;
-      dragging = false;
-      settle(false, 0);
+      const nextIdx = dx < 0
+        ? Math.min(idx + 1, tabs.length - 1)  // swipe left → next tab
+        : Math.max(idx - 1, 0);               // swipe right → prev tab
+      if (nextIdx === idx) return;
+      const btns = document.querySelectorAll(config.tabSelector);
+      btns.forEach(b => b.classList.remove('active'));
+      if (btns[nextIdx]) btns[nextIdx].classList.add('active');
+      config.current = tabs[nextIdx];
+      config.fn(tabs[nextIdx], btns[nextIdx]);
     }, { passive: true });
   });
 })();
