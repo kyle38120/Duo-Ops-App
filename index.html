@@ -150,46 +150,23 @@ label{display:block;font-size:12px;font-weight:600;letter-spacing:.18em;text-tra
 .pin-logo{width:80px;height:80px;border-radius:8px;object-fit:cover;margin-bottom:20px}
 .pin-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.15em;color:var(--white);margin-bottom:4px}
 .pin-subtitle{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fog);margin-bottom:40px}
-.pin-dots{display:flex;gap:16px;margin-bottom:40px}
-.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--fog);transition:all .15s}
-.pin-dot.filled{background:var(--rust);border-color:var(--rust)}
-.pin-dot.error{background:var(--rust);border-color:var(--rust);animation:shake .3s ease}
-.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
-.pin-btn{background:var(--charcoal);border:1px solid var(--border);border-radius:4px;padding:18px;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.05em;color:var(--white);cursor:pointer;transition:all .1s;text-align:center}
-.pin-btn:active{background:var(--ash);transform:scale(.95)}
-.pin-btn.del{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:.1em;color:var(--fog)}
-.pin-error{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--rust);height:20px;margin-top:-20px;margin-bottom:10px;text-align:center}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pin-error{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--rust);height:20px;margin-bottom:10px;text-align:center}
+#google-signin-btn{margin-top:10px;padding:16px 32px;font-size:16px;display:flex;align-items:center;gap:10px}
+#google-signin-btn:disabled{opacity:.5;cursor:not-allowed}
 </style>
 </head>
 <body>
 
-<!-- PIN SCREEN -->
+<!-- SIGN IN SCREEN -->
 <div id="pin-screen">
   <img class="pin-logo" src="https://jadenmoney.com/wp-content/uploads/2026/03/Freaky-Franky.jpg">
   <div class="pin-title">Duo Ops</div>
-  <div class="pin-subtitle">Enter PIN to continue</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
-  </div>
-  <div class="pin-error" id="pin-error"></div>
-  <div class="pin-grid">
-    <button class="pin-btn" onclick="pinPress('1')">1</button>
-    <button class="pin-btn" onclick="pinPress('2')">2</button>
-    <button class="pin-btn" onclick="pinPress('3')">3</button>
-    <button class="pin-btn" onclick="pinPress('4')">4</button>
-    <button class="pin-btn" onclick="pinPress('5')">5</button>
-    <button class="pin-btn" onclick="pinPress('6')">6</button>
-    <button class="pin-btn" onclick="pinPress('7')">7</button>
-    <button class="pin-btn" onclick="pinPress('8')">8</button>
-    <button class="pin-btn" onclick="pinPress('9')">9</button>
-    <div></div>
-    <button class="pin-btn" onclick="pinPress('0')">0</button>
-    <button class="pin-btn del" onclick="pinDel()">⌫</button>
-  </div>
+  <div class="pin-subtitle">Sign in to continue</div>
+  <div class="pin-error" id="signin-error"></div>
+  <button class="btn btn-primary" id="google-signin-btn" onclick="signInWithGoogle()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.2-2.7-.5-4z"/></svg>
+    Sign in with Google
+  </button>
 </div>
 
 <!-- DASHBOARD -->
@@ -681,8 +658,9 @@ function normalizeArr(val){
 function initFirebase(){
   const auth=firebase.auth();
   showSyncStatus('Connecting...','var(--fog)');
-  auth.signInAnonymously()
-    .then(()=>{
+  auth.onAuthStateChanged((user)=>{
+    if(user){
+      document.getElementById('pin-screen').classList.add('hidden');
       DB_REF.on('value',(snap)=>{
         const data=snap.val();
         if(data){
@@ -695,7 +673,6 @@ function initFirebase(){
           if(!state.status)state.status={};
           if(!state.gear)state.gear={pre:null,post:null};
           try{localStorage.setItem('duoops2',JSON.stringify(state));}catch(e){}
-          // Diagnostic — shows in sync status
           showSyncStatus(`Synced · ${state.tasks.length} tasks · ${state.income.length} income`,'var(--accent-green)');
         } else {
           showSyncStatus('Connected — no data found','var(--gold)');
@@ -706,10 +683,25 @@ function initFirebase(){
       },(err)=>{
         showSyncStatus('Offline','var(--fog)');
       });
-    })
-    .catch((err)=>{
-      showSyncStatus('Offline','var(--fog)');
-      console.warn('Firebase auth failed:',err.message);
+    } else {
+      document.getElementById('pin-screen').classList.remove('hidden');
+      showSyncStatus('','var(--fog)');
+    }
+  });
+}
+
+function signInWithGoogle(){
+  const btn=document.getElementById('google-signin-btn');
+  const err=document.getElementById('signin-error');
+  btn.textContent='Signing in...';
+  btn.disabled=true;
+  err.textContent='';
+  const provider=new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .catch((e)=>{
+      err.textContent='Sign-in failed. Try again.';
+      btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.2-2.7-.5-4z"/></svg> Sign in with Google';
+      btn.disabled=false;
     });
 }
 
@@ -1628,49 +1620,6 @@ function seedTasksIfEmpty(){
   save();
 }
 
-// PIN
-const PIN_CORRECT='4110';
-const PIN_KEY='duoops_unlocked';
-let pinEntry='';
-
-function checkPinUnlocked(){
-  try{return localStorage.getItem(PIN_KEY)==='1';}catch(e){return false;}
-}
-function unlockApp(){
-  try{localStorage.setItem(PIN_KEY,'1');}catch(e){}
-  document.getElementById('pin-screen').classList.add('hidden');
-}
-function pinPress(digit){
-  if(pinEntry.length>=4)return;
-  pinEntry+=digit;
-  updatePinDots();
-  if(pinEntry.length===4){
-    if(pinEntry===PIN_CORRECT){
-      setTimeout(()=>unlockApp(),150);
-    } else {
-      document.getElementById('pin-error').textContent='Incorrect PIN';
-      document.querySelectorAll('.pin-dot').forEach(d=>{d.classList.add('error');});
-      setTimeout(()=>{
-        pinEntry='';
-        updatePinDots();
-        document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('error'));
-        document.getElementById('pin-error').textContent='';
-      },700);
-    }
-  }
-}
-function pinDel(){
-  pinEntry=pinEntry.slice(0,-1);
-  updatePinDots();
-  document.getElementById('pin-error').textContent='';
-}
-function updatePinDots(){
-  for(let i=0;i<4;i++){
-    const dot=document.getElementById('pd'+i);
-    dot.classList.toggle('filled',i<pinEntry.length);
-    dot.classList.remove('error');
-  }
-}
 
 // WEATHER — Weather.gov (NWS), no API key needed, US only
 // Flow: venue string → Google Geocoding → NWS /points → NWS /forecast/hourly
@@ -1928,9 +1877,6 @@ load();
 document.getElementById('i-date').value=today();
 document.getElementById('s-date').value=today();
 document.getElementById('fab-btn').style.display='none';
-if(checkPinUnlocked()){
-  document.getElementById('pin-screen').classList.add('hidden');
-}
 renderDash();
 initFirebase();
 fetchCalendar().then(()=>{renderDash();if(currentPage==='shows')renderShows();});
