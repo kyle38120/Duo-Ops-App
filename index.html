@@ -657,9 +657,18 @@ function normalizeArr(val){
 
 function initFirebase(){
   const auth=firebase.auth();
+  const ALLOWED=['jaden.money1994@gmail.com','kyle38120@yahoo.com'];
   showSyncStatus('Connecting...','var(--fog)');
   auth.onAuthStateChanged((user)=>{
     if(user){
+      if(!ALLOWED.includes(user.email)){
+        try{localStorage.removeItem('duoops2');}catch(e){}
+        firebase.auth().signOut();
+        document.getElementById('pin-screen').classList.remove('hidden');
+        document.getElementById('signin-error').textContent='Access restricted.';
+        showSyncStatus('','var(--fog)');
+        return;
+      }
       document.getElementById('pin-screen').classList.add('hidden');
       DB_REF.on('value',(snap)=>{
         const data=snap.val();
